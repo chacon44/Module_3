@@ -59,7 +59,6 @@ public class DatabaseData {
             "ON UPDATE CASCADE ON DELETE CASCADE, " +
             "ID int REFERENCES tags (ID) " +
             "ON UPDATE CASCADE, " +
-            "amount numeric NOT NULL DEFAULT 1, " +
             "CONSTRAINT Certificates_Tags_pkey PRIMARY KEY (certificates, tags)  -- explicit pk)";
     public static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
 }
