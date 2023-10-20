@@ -15,12 +15,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static com.module3.database.DatabaseData.CREATE_CERTIFICATE_TAGS_TABLE;
 
 @Configuration
 @Component
-public class Database {
+public class CertificateDatabase {
 
-    private static final Logger LOGGER = Logger.getLogger(Database.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CertificateDatabase.class.getName());
 
 
     @Bean
@@ -50,6 +51,7 @@ public class Database {
 
             try {
                 stmt.executeUpdate(CREATE_TABLE);
+                stmt.executeUpdate(CREATE_CERTIFICATE_TAGS_TABLE);
                 LOGGER.log(Level.INFO, TABLE_CREATED);
             } catch (SQLException e){
                 LOGGER.log(Level.SEVERE, TABLE_NOT_CREATED, e);

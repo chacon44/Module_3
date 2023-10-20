@@ -2,7 +2,6 @@ package com.module3.controller;
 
 import com.module3.DTOs.ErrorDTO;
 import com.module3.DTOs.RequestDTO;
-import com.module3.DTOs.RequestPriceDTO;
 import com.module3.DTOs.ResponseDTO;
 import com.module3.model.Certificate;
 import com.module3.service.CertificateManagementService;
@@ -17,9 +16,9 @@ import java.util.Optional;
 
 
 @org.springframework.web.bind.annotation.RestController
-public class RestController {
+public class CertificatesController {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RestController.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CertificatesController.class);
 
     @Autowired
     private CertificateManagementService certificateManagementService;

@@ -1,2 +1,4 @@
-package com.module3.DTOs;public class RequestDTO {
+package com.module3.DTOs;
+
+public record RequestDTO (String name, String description, Long price){
 }

@@ -1,2 +1,4 @@
-package com.module3.DTOs;public class TagDTO {
+package com.module3.DTOs;
+
+public record TagDTO (String name) {
 }

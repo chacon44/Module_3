@@ -1,4 +1,4 @@
-package config;
+package com.module3.config;
 
 import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.context.ContextLoaderListener;
@@ -11,7 +11,7 @@ public class MyWebAppInitializer implements WebApplicationInitializer {
     @Override
     public void onStartup(ServletContext container) {
         AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-        context.setConfigLocation("config");
+        context.setConfigLocation("com/module3/config");
 
         container.addListener(new ContextLoaderListener(context));
 
