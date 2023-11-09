@@ -1,6 +1,6 @@
 package com.epam.esm.repository;
 
-import com.epam.esm.DTOs.ResponseTagDTO;
+import com.epam.esm.Dto.Tag.ResponseTagDTO;
 import com.epam.esm.model.Tag;
 import java.util.Optional;
 

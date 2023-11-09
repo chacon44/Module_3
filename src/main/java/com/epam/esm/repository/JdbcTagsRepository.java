@@ -1,6 +1,6 @@
 package com.epam.esm.repository;
 
-import com.epam.esm.DTOs.ResponseTagDTO;
+import com.epam.esm.Dto.Tag.ResponseTagDTO;
 import com.epam.esm.model.Tag;
 import com.epam.esm.exceptions.CustomizedExceptions;
 import com.epam.esm.exceptions.ErrorCode;
@@ -17,7 +17,7 @@ import java.util.Optional;
 import static com.epam.esm.database.DatabaseData.*;
 
 @Repository
-public class JdbcTagsRepository implements TagsRepository{
+public class JdbcTagsRepository implements TagsRepository {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(RestController.class);
 
@@ -30,7 +30,7 @@ public class JdbcTagsRepository implements TagsRepository{
         String saveQuery = ("INSERT INTO %s " +
                 "(%s) VALUES (?)").formatted(
                 TABLE_TAG_NAME,
-                COLUMN_NAME
+                TAG_NAME
         );
 
         try {
@@ -42,41 +42,41 @@ public class JdbcTagsRepository implements TagsRepository{
     }
 
     @Override
-    public ResponseTagDTO returnTag(Long id) {
-        String query = ("SELECT * from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, COLUMN_ID);
+    public ResponseTagDTO returnTag(Long tagId) {
+        String query = ("SELECT * from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, TAG_ID);
 
         return jdbcTemplate.queryForObject(query, (resultSet, rowNum) ->
                         (new ResponseTagDTO(
-                                id,
-                                resultSet.getString(COLUMN_NAME)
+                                tagId,
+                                resultSet.getString(TAG_NAME)
                         )),
-                id
+                tagId
         );
     }
     @Override
-    public ResponseTagDTO returnIdByName(String name) {
+    public ResponseTagDTO returnIdByName(String tagName) {
 
-        String query = "SELECT * from " + TABLE_TAG_NAME + " WHERE " + COLUMN_NAME + " = '" + name + "'";
+        String query = "SELECT * from " + TABLE_TAG_NAME + " WHERE " + TAG_NAME + " = '" + tagName + "'";
 
         List<ResponseTagDTO> responses = jdbcTemplate.query(
                 query,
                 (resultSet, i) -> new ResponseTagDTO(
-                        resultSet.getLong(COLUMN_ID),
-                        name
+                        resultSet.getLong(TAG_ID),
+                        tagName
                 )
         );
         return responses.get(0);
     }
 
     @Override
-    public Optional<Tag> findById(Long id) {
-        String query = ("SELECT * from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, COLUMN_ID);
+    public Optional<Tag> findById(Long tagId) {
+        String query = ("SELECT * from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, TAG_ID);
 
         System.out.println(query);
         try {
             Tag response = jdbcTemplate.queryForObject(query, (resultSet, rowNum) ->
                             new Tag(),
-                    id
+                    tagId
             );
             logger.info("Finished search");
             return Optional.ofNullable(response);
@@ -87,15 +87,15 @@ public class JdbcTagsRepository implements TagsRepository{
     }
 
     @Override
-    public Optional<ResponseTagDTO> findByName(String name) {
+    public Optional<ResponseTagDTO> findByName(String tagName) {
 
-        String query = "SELECT * from " + TABLE_TAG_NAME + " WHERE " + COLUMN_NAME + " = '" + name + "'";
+        String query = "SELECT * from " + TABLE_TAG_NAME + " WHERE " + TAG_NAME + " = '" + tagName + "'";
 
         List<ResponseTagDTO> responses = jdbcTemplate.query(
                 query,
                 (resultSet, i) -> new ResponseTagDTO(
-                        resultSet.getLong(COLUMN_ID),
-                        name
+                        resultSet.getLong(TAG_ID),
+                        tagName
                 )
         );
 
@@ -107,16 +107,17 @@ public class JdbcTagsRepository implements TagsRepository{
         }
     }
     @Override
-    public int deleteById(Long id) {
+    public int deleteById(Long tagId) {
 
-        String query = ("DELETE from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, COLUMN_ID);
-        return jdbcTemplate.update(query, id);
+        String query = ("DELETE from %s WHERE %s = ?").formatted(TABLE_TAG_NAME, TAG_ID);
+    //UPDATE CERTIFICATE_TAG TABLE
+        return jdbcTemplate.update(query, tagId);
     }
 
     @Override
-    public int updateName(long id, String name){
+    public int updateName(long tagId, String tagName){
 
-        String query = ("UPDATE %s SET %s = ? WHERE %s = ?").formatted(TABLE_TAG_NAME, COLUMN_NAME, COLUMN_ID);
-        return jdbcTemplate.update(query, name, id);
+        String query = ("UPDATE %s SET %s = ? WHERE %s = ?").formatted(TABLE_TAG_NAME, TAG_NAME, TAG_ID);
+        return jdbcTemplate.update(query, tagName, tagId);
     }
 }

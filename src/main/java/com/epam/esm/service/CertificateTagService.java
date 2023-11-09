@@ -1,5 +1,6 @@
 package com.epam.esm.service;
 
+import com.epam.esm.Dto.GiftCertificate.GiftCertificateResponseDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.repository.CertificateTagRepository;
 import org.slf4j.Logger;
@@ -12,14 +13,9 @@ public class CertificateTagService {
 
     @Autowired
     CertificateTagRepository certificateTagRepository;
-    private static final Logger logger = LoggerFactory.getLogger(CertificateManagementService.class);
 
     public GiftCertificate saveCertificate(GiftCertificate giftCertificate) {
 
-        return CertificateTagService.certificateTagRepository(giftCertificate);
-    }
-
-    public GiftCertificate readCertificate(Long certificateId) {
-        return certificateTagRepository.readCertificate(certificateId);
+        return certificateTagRepository.createCertificate(giftCertificate);
     }
 }

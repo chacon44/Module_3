@@ -11,7 +11,6 @@ public class DateCalculation {
 
     public final static String lastUpdateDate = LastUpdateDate();
     public final static String createDate = df.format(getDate());
-    public final static long duration = getDuration();
 
     public static String LastUpdateDate(){
         TimeZone tz = TimeZone.getTimeZone("UTC");
@@ -39,10 +38,5 @@ public class DateCalculation {
         calendar.set(Calendar.MILLISECOND, millisecond);
 
         return calendar.getTime();
-    }
-
-    public static long getDuration(){
-
-        return Math.abs(new Date().getTime() - getDate().getTime()) / (24 * 60 * 60 * 1000);
     }
 }
