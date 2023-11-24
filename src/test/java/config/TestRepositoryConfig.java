@@ -1,4 +1,4 @@
-package testConfig;
+package config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -9,25 +9,21 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 import javax.sql.DataSource;
 
-@Profile("h2")
 @Configuration
-public class TestConfig {
-    private static final String DB_SETUP = "classpath:db_setup.sql";
-    private static final String DB_INIT = "classpath:db_init.sql";
-
+@Profile("h2")
+public class TestRepositoryConfig {
     @Bean
     public DataSource dataSource() {
-        EmbeddedDatabaseBuilder databaseBuilder = new EmbeddedDatabaseBuilder();
-        return databaseBuilder
-                .setType(EmbeddedDatabaseType.H2)
-                .addScript(DB_INIT)
-                .addScript(DB_SETUP)
+
+        EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
+        return builder.setType(EmbeddedDatabaseType.H2)
+                .addScript("data.sql")
                 .build();
     }
 
     @Bean
-    public JdbcTemplate jdbcTemplate(DataSource dataSource) {
-
+    public JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());
     }
+
 }

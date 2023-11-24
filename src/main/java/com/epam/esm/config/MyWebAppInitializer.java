@@ -11,7 +11,7 @@ public class MyWebAppInitializer implements WebApplicationInitializer {
     @Override
     public void onStartup(ServletContext container) {
         AnnotationConfigWebApplicationContext context = new AnnotationConfigWebApplicationContext();
-        context.setConfigLocation("com/epam/esm/config");
+        context.setConfigLocation("com.epam.esm.config");
 
         container.addListener(new ContextLoaderListener(context));
 

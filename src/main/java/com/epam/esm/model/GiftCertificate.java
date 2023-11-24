@@ -1,19 +1,29 @@
 package com.epam.esm.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import java.util.List;
 
-@Getter
+@Data
 @Setter
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class GiftCertificate {
-    private Long certificateId;
-    private String certificateName;
-    private String certificateDescription;
-    private Double certificatePrice;
-    private Long certificateDuration;
-    private String certificateCreateDate;
-    private String certificateLastUpdateDate;
-    //private List<Tag> tags;
+    private Long id;
+    private String name;
+    private String description;
+    private Double price;
+    private Long duration;
+    private String createDate;
+    private String lastUpdateDate;
+    private List<Tag> tags;
+
+    public GiftCertificate(String name, String description, Double price, Long duration) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.duration = duration;
+    }
 }
 

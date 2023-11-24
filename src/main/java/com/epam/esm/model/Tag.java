@@ -1,11 +1,15 @@
 package com.epam.esm.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
-public class Tag {
-    private Long tagId;
-    private String tagName;
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class Tag{
+    private Long id;
+    private String name;
 }

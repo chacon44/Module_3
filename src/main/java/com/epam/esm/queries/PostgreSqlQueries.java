@@ -1,12 +1,34 @@
 package com.epam.esm.queries;
 
-import static com.epam.esm.database.DatabaseData.*;
-import static com.epam.esm.database.DatabaseData.CERTIFICATE_LAST_UPDATE_DATE;
-
 public class PostgreSqlQueries {
 
-    public static final String INSERT_NEW_GIFT_CERTIFICATE = ("INSERT INTO %s (%s,%s,%s,%s,%s,%s) VALUES (?, ?, ?, ?, ?, ?)").formatted(TABLE_CERTIFICATE_NAME, CERTIFICATE_NAME, CERTIFICATE_DESCRIPTION, CERTIFICATE_PRICE, CERTIFICATE_DURATION, CERTIFICATE_CREATE_DATE, CERTIFICATE_LAST_UPDATE_DATE);
-    public static final String FIND_GIFT_CERTIFICATE_BY_ID = """ 
-            SELECT * FROM TABLE_CERTIFICATE_NAME WHERE CERTIFICATE_ID = ?""";
+    //CERTIFICATES
+    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING RETURNING certificate_id";
 
+    public static final String GET_GIFT_CERTIFICATE_BY_NAME = "SELECT * FROM certificates WHERE certificate_name = ?";
+    public static final String GET_GIFT_CERTIFICATE_BY_SEARCH_WORD = "SELECT * FROM certificates WHERE certificate_name LIKE ? OR description LIKE ?";
+    public static final String GET_ALL_CERTIFICATES = "SELECT * FROM certificates";
+
+    public static final String GET_GIFT_CERTIFICATE_BY_ID = "SELECT * FROM certificates WHERE certificate_id = ?";
+
+    public static final String UPDATE_GIFT_CERTIFICATE = "UPDATE certificates SET certificate_name = COALESCE(?, certificate_name), description = COALESCE(?, description), price = COALESCE(?, price), duration = COALESCE(?, duration), last_update_date = COALESCE(?, last_update_date) WHERE certificate_id = ?";
+
+    public static final String DELETE_GIFT_CERTIFICATE_BY_ID = "DELETE FROM certificates WHERE certificate_id = ?";
+
+    //TAGS
+    public static final String SAVE_TAG = "INSERT INTO tag (tag_name) VALUES (?) ON CONFLICT DO NOTHING RETURNING tag_id";
+
+    public static final String GET_TAG_BY_ID = "SELECT * FROM tag WHERE tag_id = ?";
+    public static final String GET_TAG_BY_NAME = "SELECT * FROM tag WHERE tag_name = ?";
+
+    public static final String DELETE_TAG_BY_ID = "DELETE FROM tag WHERE tag_id = ?";
+
+    //CERTIFICATE TAGS
+    public static final String SAVE_TAGS_TO_GIFT_CERTIFICATES = "INSERT INTO gift_certificate_tag (certificate_id, tag_id) VALUES(?, ?)";
+    public static final String GET_TAGS_BY_CERTIFICATE_ID = "SELECT tag_id FROM gift_certificate_tag WHERE certificate_id = ?";
+    public static final String GET_CERTIFICATES_BY_TAG_ID = "SELECT certificate_id FROM gift_certificate_tag WHERE tag_id = ?";
+
+
+    public static final String DELETE_CERTIFICATE_FROM_JOINT_TABLE = "DELETE FROM gift_certificate_tag WHERE certificate_id = ?";
+    public static final String DELETE_TAG_FROM_JOINT_TABLE = "DELETE FROM gift_certificate_tag WHERE tag_id = ?";
 }
