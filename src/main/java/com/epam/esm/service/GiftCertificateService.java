@@ -2,7 +2,6 @@ package com.epam.esm.service;
 
 import com.epam.esm.Dto.Errors.ErrorDTO;
 import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
-import com.epam.esm.Dto.GiftCertificate.GiftCertificateResponseDTO;
 import com.epam.esm.exceptions.Codes;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.repository.GiftCertificateTagRepository;
@@ -13,8 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.epam.esm.exceptions.Codes.*;
 import static com.epam.esm.exceptions.Messages.*;
@@ -36,34 +34,50 @@ public class GiftCertificateService {
         ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificateRequestDTO);
         if (requestValidationMessage != null) return requestValidationMessage;
 
-        Optional<Long> id = giftCertificateTagRepository.saveGiftCertificate(giftCertificateRequestDTO);
+        GiftCertificate giftCertificate = new GiftCertificate(
+                giftCertificateRequestDTO.name(),
+                giftCertificateRequestDTO.description(),
+                giftCertificateRequestDTO.price(),
+                giftCertificateRequestDTO.duration()
+        );
 
-        certificateSuccesfullySaved = id.isPresent();
+        List<Long> tagList = giftCertificateRequestDTO.tagIds();
+        Long id = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, new Date(), tagList);
+
+        certificateSuccesfullySaved = id != null;
         if (!certificateSuccesfullySaved) {
-            ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_ALREADY_EXISTS, CERTIFICATE_FOUND);
-            return ResponseEntity.status(HttpStatus.FOUND).body(errorResponse);
+            GiftCertificate giftCertificateByName = giftCertificateTagRepository.getGiftCertificateByName(giftCertificateRequestDTO.name());
+            if (giftCertificateByName != null) {
+                Long idFound = giftCertificateByName.getId();
+
+                ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_ALREADY_EXISTS.formatted(idFound), CERTIFICATE_FOUND);
+                return ResponseEntity.status(HttpStatus.FOUND).body(errorResponse);
+            }
         }
 
-        Optional<GiftCertificate> response = giftCertificateTagRepository.getGiftCertificateById(id.get());
+        if (id != null) {
+            GiftCertificate response = giftCertificateTagRepository.getGiftCertificateById(id);
 
-        certificateExists = response.isPresent();
-        if (certificateExists)
-            return new ResponseEntity<>(response.get(), HttpStatus.CREATED);
-        else {
-            ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_COULD_NOT_BE_SAVED, 500);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            certificateExists = response != null;
+            if (certificateExists)
+                return new ResponseEntity<>(response, HttpStatus.CREATED);
+            else {
+                ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_COULD_NOT_BE_SAVED, 500);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
         }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+
     }
 
     public ResponseEntity<?> getGiftCertificateById(Long giftCertificateId) {
 
-        Optional<GiftCertificate> optionalCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
+        GiftCertificate optionalCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 
-        certificateExists = optionalCertificate.isPresent();
+        certificateExists = optionalCertificate != null;
         if (certificateExists) {
-            GiftCertificate giftCertificate = optionalCertificate.get();
 
-            return ResponseEntity.ok(giftCertificate);
+            return ResponseEntity.ok(optionalCertificate);
         } else {
             String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
 
@@ -82,7 +96,7 @@ public class GiftCertificateService {
 
     public ResponseEntity<?> deleteGiftCertificateById(Long giftCertificateId) {
         certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificate(giftCertificateId);
-        
+
         if (certificateSuccessfullyDeleted) {
             giftCertificateTagRepository.deleteCertificateFromJoinTable(giftCertificateId);
             return ResponseEntity.status(HttpStatus.FOUND).body(null);
@@ -91,31 +105,58 @@ public class GiftCertificateService {
         String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
 
         ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_NOT_FOUND);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(errorResponse);
     }
 
     public ResponseEntity<?> updateGiftCertificate(long id, GiftCertificateRequestDTO giftCertificateRequestDTO) {
 
-        //TODO allow updating with non existing tags. Update only existing ones or don't update nothing
+        //TODO extract methods from here to make the code cleaner
         ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificateRequestDTO);
+        log.info("Check if request has valid parameters");
         if (requestValidationMessage != null) return requestValidationMessage;
 
-        boolean nameExist = giftCertificateTagRepository.getGiftCertificateByName(giftCertificateRequestDTO.name()).isPresent();
-        if (!nameExist) {
+        log.info("Check if request already exists or if id is associated to any certificate. " +
+                "If certificate already exists, don't execute update");
+        if (validateUpdate(id, giftCertificateRequestDTO)) {
+            GiftCertificate giftCertificate = new GiftCertificate(
+                    giftCertificateRequestDTO.name(),
+                    giftCertificateRequestDTO.description(),
+                    giftCertificateRequestDTO.price(),
+                    giftCertificateRequestDTO.duration()
+            );
+            List<Long> tagList = giftCertificateRequestDTO.tagIds();
 
-            Optional<GiftCertificate> responseDTO = giftCertificateTagRepository.updateGiftCertificate(id, giftCertificateRequestDTO);
-            if (responseDTO.isPresent())
-                return ResponseEntity.status(HttpStatus.FOUND).body(convertToDTO(responseDTO.get()));
-            else {
-                String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(id);
+            log.info("Certificate requested has one or more new parameters, so we update it");
+            GiftCertificate responseDTO = giftCertificateTagRepository.updateGiftCertificate(id, giftCertificate, tagList);
 
-                ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_NOT_FOUND);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-        }
-        }else {
+            log.info("Check if it has been updated and response exists");
+            if (responseDTO != null) {
+                log.info("updated succesfully, return OK");
+                return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
+            } else {
+                log.info("has not been updated by some reason");
 
-            Long idFound = giftCertificateTagRepository.getGiftCertificateByName(giftCertificateRequestDTO.name()).get().getId();
+                log.info("Check if the problem is a not found id");
+                if (giftCertificateTagRepository.getGiftCertificateById(id) == null) {
+                    String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(id);
+
+                    ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_NOT_FOUND);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+                } else {
+                    log.info("There is a problem with parameters. There are non existing tags");
+
+                    String message = ("There are non existing tags");
+
+                    ErrorDTO errorResponse = new ErrorDTO(message, TAG_NOT_FOUND);
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+                }
+            }
+        } else {
+            log.info("certificate requested already exists, so we don't update and instead return found");
+
+            log.info("get the matching certificate using the parameter name and get id of matched certificate");
+            GiftCertificate certificate = giftCertificateTagRepository.getGiftCertificateByName(giftCertificateRequestDTO.name());
+            Long idFound = certificate.getId();
             String message = CERTIFICATE_ALREADY_EXISTS.formatted(idFound);
             ErrorDTO errorResponse = new ErrorDTO(message, Codes.CERTIFICATE_FOUND);
             return ResponseEntity.status(HttpStatus.FOUND).body(errorResponse);
@@ -134,18 +175,22 @@ public class GiftCertificateService {
         return null;
     }
 
-    public GiftCertificateResponseDTO convertToDTO(GiftCertificate giftCertificate) {
+    private boolean validateUpdate(long id, GiftCertificateRequestDTO giftCertificateRequestDTO) {
 
-        return new GiftCertificateResponseDTO(
-                giftCertificate.getId(),
-                giftCertificate.getName(),
-                giftCertificate.getDescription(),
-                giftCertificate.getPrice(),
-                giftCertificate.getDuration(),
-                giftCertificate.getCreateDate(),
-                giftCertificate.getLastUpdateDate(),
-                giftCertificate.getTags()
-        );
+        GiftCertificate certificate = giftCertificateTagRepository.getGiftCertificateById(id);
+
+        if (certificate != null) {
+
+            List<Long> tagIdList = giftCertificateTagRepository.tagsByCertificateId(id);
+            boolean nameExist = Objects.equals(certificate.getName(), giftCertificateRequestDTO.name());
+            boolean descriptionExist = Objects.equals(certificate.getDescription(), giftCertificateRequestDTO.description());
+            boolean priceExist = Objects.equals(certificate.getPrice(), giftCertificateRequestDTO.price());
+            boolean durationExist = Objects.equals(certificate.getDuration(), giftCertificateRequestDTO.duration());
+            boolean tagsExist = tagIdList.equals(giftCertificateRequestDTO.tagIds());
+
+            return !nameExist || !descriptionExist || !priceExist || !durationExist || !tagsExist;
+        }
+        return false;
     }
 }
 

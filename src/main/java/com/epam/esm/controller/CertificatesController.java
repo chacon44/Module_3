@@ -6,6 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @RestController
 public class CertificatesController {
 
@@ -28,7 +31,14 @@ public class CertificatesController {
             @RequestParam(required = false) String searchWord,
             @RequestParam(required = false) String nameOrder,
             @RequestParam(required = false) String createDateOrder) {
+        String encodedTagName;
+        try {
+            encodedTagName = URLEncoder.encode(tagName, StandardCharsets.UTF_8);
+            System.out.println("Encoded Tag Name: " + encodedTagName);
 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return giftCertificateService.getFilteredCertificates(
                 tagName,
                 searchWord,

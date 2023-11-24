@@ -7,16 +7,14 @@ import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.validators.TagValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 import static com.epam.esm.exceptions.Codes.TAG_BAD_REQUEST;
 import static com.epam.esm.exceptions.Codes.TAG_NOT_FOUND;
 import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.BooleanFlags.*;
+import static org.springframework.http.HttpStatus.*;
 
 
 @Slf4j
@@ -35,10 +33,10 @@ public class TagService {
         ResponseEntity<ErrorDTO> requestValidationMessage = validateTagRequest(tagRequestDTO);
         if (requestValidationMessage != null) return requestValidationMessage;
 
-        tagExists = giftCertificateTagRepository.getTagByName(tagRequestDTO.name()).isPresent();
+        tagExists = giftCertificateTagRepository.getTagByName(tagRequestDTO.name()) != null;
 
         if (tagExists) {
-            Long idFound = giftCertificateTagRepository.getTagByName(tagRequestDTO.name()).get();
+            Long idFound = giftCertificateTagRepository.getTagByName(tagRequestDTO.name());
             String message = TAG_ALREADY_EXISTS.formatted(idFound);
             return ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
         }
@@ -46,31 +44,30 @@ public class TagService {
         Tag tag = new Tag();
         tag.setName(tagRequestDTO.name());
 
-        Optional<Long> id = giftCertificateTagRepository.saveTag(tag);
+        Long id = giftCertificateTagRepository.saveTag(tag);
 
-        tagSuccesfullySaved = id.isPresent();
+        tagSuccesfullySaved = id != null;
         if (!tagSuccesfullySaved) {
-            return ResponseEntity.badRequest().body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
+            return ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
         }
 
-        Optional<Tag> tagResponse = giftCertificateTagRepository.getTagById(id.get());
-        tagSuccesfullySaved = tagResponse.isPresent();
+        Tag tagResponse = giftCertificateTagRepository.getTagById(id);
+        tagSuccesfullySaved = tagResponse != null;
         return tagSuccesfullySaved ?
-                ResponseEntity.status(HttpStatus.CREATED).body(tagResponse.get()) :
-                ResponseEntity.badRequest().body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
+                ResponseEntity.status(CREATED).body(tagResponse) :
+                ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
     }
     public ResponseEntity<?> getTagById(long tagId) {
-        Optional<Tag> optionalTag = giftCertificateTagRepository.getTagById(tagId);
+        Tag tag = giftCertificateTagRepository.getTagById(tagId);
 
-        tagExists = optionalTag.isPresent();
+        tagExists = tag != null;
         if (tagExists) {
-            Tag tag = optionalTag.get();
             return ResponseEntity.ok(tag);
         } else {
             String message = TAG_ID_NOT_FOUND.formatted(tagId);
 
             ErrorDTO errorResponse = new ErrorDTO(message, TAG_NOT_FOUND);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+            return ResponseEntity.status(NOT_FOUND).body(errorResponse);
         }
     }
     public ResponseEntity<?> deleteTagById(long tagId) {
@@ -78,12 +75,12 @@ public class TagService {
         tagSuccessfullyDeleted = giftCertificateTagRepository.deleteTag(tagId);
         if (tagSuccessfullyDeleted) {
             giftCertificateTagRepository.deleteTagFromJoinTable(tagId);
-            return ResponseEntity.status(HttpStatus.FOUND).body(null);
+            return ResponseEntity.status(FOUND).body(null);
         }
 
         String message = TAG_ID_NOT_FOUND.formatted(tagId);
         ErrorDTO errorResponse = new ErrorDTO(message, TAG_NOT_FOUND);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return ResponseEntity.status(NOT_FOUND).body(errorResponse);
 
     }
     private ResponseEntity<ErrorDTO> validateTagRequest(TagRequestDTO tagRequestDTO) {

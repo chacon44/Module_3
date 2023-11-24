@@ -7,7 +7,7 @@ public class BooleanFlags {
     public static boolean certificateRequestIsValid;
     public static boolean certificateNameExists;
     public static boolean certificateSuccesfullySaved;
-    public static boolean certificatesListIsEmpty;
+    public static boolean certificatesListIsNotEmpty;
     public static boolean certificateSuccessfullyDeleted;
 
     //tags
@@ -16,4 +16,5 @@ public class BooleanFlags {
     public static boolean tagSuccesfullySaved;
     public static boolean tagSuccessfullyDeleted;
     public static boolean tagsListIsEmpty;
+    public static boolean thereAreNonExistingTags;
 }

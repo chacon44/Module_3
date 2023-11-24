@@ -1,11 +1,10 @@
 package com.epam.esm.repository;
 
-import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 
+import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 public interface GiftCertificateTagRepository {
 
@@ -14,41 +13,43 @@ public interface GiftCertificateTagRepository {
     */
 
     //SAVE
-    Optional <Long> saveGiftCertificate(GiftCertificateRequestDTO GiftCertificateRequestDTO);
+    Long saveGiftCertificate(GiftCertificate giftCertificate, Date date, List<Long> tagList);
 
     //GET
-    Optional<GiftCertificate> getGiftCertificateById(long id);
-    Optional<GiftCertificate> getGiftCertificateByName(String giftCertificateName);
+    GiftCertificate getGiftCertificateById(long id);
+    GiftCertificate getGiftCertificateByName(String giftCertificateName);
     List<GiftCertificate> getCertificatesByTagName(String tagName);
     List<GiftCertificate> getCertificatesBySearchWord(String searchWord);
-    List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder);
-    List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder);
 
     //DELETE
     boolean deleteGiftCertificate(long id);
 
     //UPDATE
-    Optional<GiftCertificate> updateGiftCertificate(long id, GiftCertificateRequestDTO giftCertificate);
+    GiftCertificate updateGiftCertificate(long id, GiftCertificate giftCertificate, List<Long> tagIds);
 
     /**
      TAGS
      */
 
     //SAVE
-    Optional<Long> saveTag(Tag tag);
-
+    Long saveTag(Tag tag);
     //GET
-    Optional<Tag> getTagById(long id);
-    Optional<Long> getTagByName(String name);
+    Tag getTagById(long id);
+    Long getTagByName(String name);
+    List<Tag> getTagsListByCertificateId(long certificate_id);
+    List<Long> tagsByCertificateId(long certificate_id);
+    List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder);
+    List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder);
 
     //DELETE
     void deleteTagFromJoinTable(long id);
     boolean deleteTag(long id);
-
+    boolean filterValidTags(List<Long> tagIds);
     /**
      JOINT TABLE
      */
-
+    void joinTags(Long certificateId, List<Long> tagIds);
     //DELETE
-    boolean deleteCertificateFromJoinTable(long id);
+    boolean deleteCertificateFromJoinTable(long id) throws RuntimeException;
+    String formattingDate(Date date);
 }

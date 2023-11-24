@@ -7,7 +7,6 @@ public class PostgreSqlQueries {
 
     public static final String GET_GIFT_CERTIFICATE_BY_NAME = "SELECT * FROM certificates WHERE certificate_name = ?";
     public static final String GET_GIFT_CERTIFICATE_BY_SEARCH_WORD = "SELECT * FROM certificates WHERE certificate_name LIKE ? OR description LIKE ?";
-    public static final String GET_ALL_CERTIFICATES = "SELECT * FROM certificates";
 
     public static final String GET_GIFT_CERTIFICATE_BY_ID = "SELECT * FROM certificates WHERE certificate_id = ?";
 
@@ -16,10 +15,11 @@ public class PostgreSqlQueries {
     public static final String DELETE_GIFT_CERTIFICATE_BY_ID = "DELETE FROM certificates WHERE certificate_id = ?";
 
     //TAGS
-    public static final String SAVE_TAG = "INSERT INTO tag (tag_name) VALUES (?) ON CONFLICT DO NOTHING RETURNING tag_id";
+    public static final String SAVE_TAG = "INSERT INTO tag (tag_name) VALUES (?)";
 
     public static final String GET_TAG_BY_ID = "SELECT * FROM tag WHERE tag_id = ?";
     public static final String GET_TAG_BY_NAME = "SELECT * FROM tag WHERE tag_name = ?";
+    public static final String GET_ALL_TAGS = "SELECT * FROM tag";
 
     public static final String DELETE_TAG_BY_ID = "DELETE FROM tag WHERE tag_id = ?";
 

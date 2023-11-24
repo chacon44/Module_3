@@ -1,6 +1,5 @@
 package com.epam.esm.repository;
 
-import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
 import com.epam.esm.mapper.GiftCertificateRowMapper;
 import com.epam.esm.mapper.GiftCertificateRowMapperForIds;
 import com.epam.esm.mapper.TagRowMapper;
@@ -10,8 +9,11 @@ import com.epam.esm.model.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -21,6 +23,9 @@ import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.BooleanFlags.*;
 import static com.epam.esm.logs.LogMessages.*;
 import static com.epam.esm.queries.PostgreSqlQueries.*;
+import static java.sql.Statement.*;
+import static java.util.Arrays.asList;
+import static java.util.Comparator.comparing;
 
 @Repository
 @Slf4j
@@ -31,8 +36,6 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     private final TagRowMapperForIds tagRowMapperForIds = new TagRowMapperForIds();
     private final GiftCertificateRowMapper certificateRowMapper;
     private final GiftCertificateRowMapperForIds certificateRowMapperForIds = new GiftCertificateRowMapperForIds();
-
-
 
     public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
@@ -47,175 +50,168 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         return jdbcTemplate.update(DELETE_CERTIFICATE_FROM_JOINT_TABLE, giftCertificateId) > 0;
     }
 
-    @Override
-    public void deleteTagFromJoinTable(long tagId) {
-        log.info(DELETING_TAG_FROM_JOIN_TABLE);
-
-        jdbcTemplate.update(DELETE_TAG_FROM_JOINT_TABLE, tagId);
-    }
 
     /**
      * CERTIFICATE
      */
     @Override
-    public Optional<Long> saveGiftCertificate(GiftCertificateRequestDTO requestDTO) {
+    public Long saveGiftCertificate(GiftCertificate giftCertificate, Date date, List<Long> tagList) {
         log.info(SAVING_GIFT_CERTIFICATE);
 
-        certificateNameExists = getGiftCertificateByName(requestDTO.name()).isPresent();
+        certificateNameExists = getGiftCertificateByName(giftCertificate.getName()) != null;
         if (certificateNameExists)
-            return Optional.empty();
+            return null;
 
-        String defaultTime = formattingDate(new Date());
-        Optional<Long> id = Optional.ofNullable(jdbcTemplate.queryForObject(SAVE_GIFT_CERTIFICATE, Long.class, requestDTO.name(), requestDTO.description(), requestDTO.price(), requestDTO.duration(), defaultTime, defaultTime));
 
-        certificateSuccesfullySaved = id.isPresent();
-        tagsListIsEmpty = requestDTO.tagIds().isEmpty();
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        log.info("generated key holder");
 
-        if (certificateSuccesfullySaved && !tagsListIsEmpty)
-            joinTags(id.get(), requestDTO.tagIds());
-        return id;
+        jdbcTemplate.update(
+                connection -> {
+                    PreparedStatement ps = connection.prepareStatement(SAVE_GIFT_CERTIFICATE, RETURN_GENERATED_KEYS);
+
+                    log.info("ps created");
+
+                    ps.setString(1, giftCertificate.getName());
+                    ps.setString(2, giftCertificate.getDescription());
+                    ps.setDouble(3, giftCertificate.getPrice());
+                    ps.setLong  (4, giftCertificate.getDuration());
+                    ps.setString(5, formattingDate(date));
+                    ps.setString(6, formattingDate(date));
+                    return ps;
+                }, keyHolder);
+
+        if (keyHolder.getKey() != null) {
+            Long id = keyHolder.getKey().longValue();
+            giftCertificate.setId(id);
+            joinTags(id, tagList);
+            return id;
+        } else
+            return null;
     }
 
     @Override
-    public Optional<GiftCertificate> getGiftCertificateById(long giftCertificateId) {
+    public GiftCertificate getGiftCertificateById(long giftCertificateId) {
         log.info(GETTING_GIFT_CERTIFICATES_BY_ID, giftCertificateId);
 
         try {
-            Optional<GiftCertificate> giftCertificate = Optional.ofNullable(jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_ID, certificateRowMapper, giftCertificateId));
+            GiftCertificate giftCertificate = jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_ID, certificateRowMapper, giftCertificateId);
 
-            certificateExists = giftCertificate.isPresent();
+            if (giftCertificate != null) {
 
-            if (!certificateExists) return Optional.empty();
+                List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificateId);
+                giftCertificate.setTags(tagsToAdd);
 
-            giftCertificate.get().setTags(
-                    tagsByCertificateId(giftCertificateId).stream()
-                            .map(this::getTagById)
-                            .filter(Optional::isPresent)
-                            .map(Optional::get)
-                            .map(tag -> new Tag(tag.getId(), tag.getName()))
-                            .collect(Collectors.toList())
-            );
-            return giftCertificate;
-        } catch (EmptyResultDataAccessException e){
+                return giftCertificate;
+            } else return null;
+        } catch (EmptyResultDataAccessException e) {
             log.warn(CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId));
-            return Optional.empty();
+            return null;
         }
     }
 
     @Override
-    public Optional<GiftCertificate> getGiftCertificateByName(String giftCertificateName) {
+    public GiftCertificate getGiftCertificateByName(String giftCertificateName) {
         log.info(GETTING_GIFT_CERTIFICATE_BY_NAME, giftCertificateName);
         try {
             GiftCertificate giftCertificate = jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_NAME, certificateRowMapper, giftCertificateName);
-            return Optional.ofNullable(giftCertificate);
+            if (giftCertificate == null)
+                return null;
+            else {
+                List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificate.getId());
+                giftCertificate.setTags(tagsToAdd);
+                return giftCertificate;
+            }
         } catch (EmptyResultDataAccessException e) {
             log.warn(CERTIFICATE_WITH_NAME_NOT_FOUND.formatted(giftCertificateName));
-            return Optional.empty();
+            return null;
         }
     }
 
     @Override
     public List<GiftCertificate> getCertificatesByTagName(String tagName) {
 
-        Optional<Long> id = getTagByName(tagName);
-        tagExists = id.isPresent();
-
+        Long id = getTagByName(tagName);
+        tagExists = id != null;
         if (tagExists) {
-            log.info(TAG_FOUND.formatted(tagName, id.get()));
+            log.info(TAG_FOUND.formatted(tagName, id));
 
-            List<Long> giftCertificates = jdbcTemplate.query(GET_CERTIFICATES_BY_TAG_ID, certificateRowMapperForIds, id.get());
+            List<Long> giftCertificates = jdbcTemplate.query(GET_CERTIFICATES_BY_TAG_ID, certificateRowMapperForIds, id);
 
-            certificatesListIsEmpty = giftCertificates.isEmpty();
+            boolean certificatesListIsEmpty = giftCertificates.isEmpty();
 
-            if (!certificatesListIsEmpty) {
-                List<GiftCertificate> responseDTOList = new ArrayList<>();
-                log.debug(CERTIFICATES_LIST_OF_TAG_IS_NOT_EMPTY, tagName);
-                giftCertificates.stream().map(this::getGiftCertificateById).forEach(giftCertificateOptional -> giftCertificateOptional.ifPresent(responseDTOList::add));
-                return responseDTOList;
-            } else return List.of();
+            return certificatesListIsEmpty ? List.of() : giftCertificates.stream().map(this::getGiftCertificateById).collect(Collectors.toList());
         } else return List.of();
     }
 
     @Override
     public List<GiftCertificate> getCertificatesBySearchWord(String searchWord) {
 
+        String searchTerm = "%" + searchWord + "%";
+
         List<GiftCertificate> giftCertificates = jdbcTemplate
-                .query(GET_GIFT_CERTIFICATE_BY_SEARCH_WORD, certificateRowMapper, "%"+searchWord+"%", "%"+searchWord+"%");
+                .query(GET_GIFT_CERTIFICATE_BY_SEARCH_WORD, certificateRowMapper, searchTerm, searchTerm);
 
-        certificatesListIsEmpty = giftCertificates.isEmpty();
-        if (!certificatesListIsEmpty) {
-            log.debug(CERTIFICATES_LIST_IS_EMPTY);
-            return List.of();
-        }
+        certificatesListIsNotEmpty = giftCertificates.isEmpty();
 
-        log.debug(CERTIFICATES_LIST_IS_NOT_EMPTY);
-        List<GiftCertificate> responseDTOList = new ArrayList<>();
-        for (GiftCertificate giftCertificate : giftCertificates) {
-            Optional<GiftCertificate> giftCertificateOptional = getGiftCertificateById(giftCertificate.getId());
-            giftCertificateOptional.ifPresent(responseDTOList::add);
-        }
-
-        log.debug(CERTIFICATES_LIST_IS_NOT_EMPTY);
-        return responseDTOList;
+        return certificatesListIsNotEmpty ?
+                List.of() :
+                giftCertificates.stream().map(giftCertificate -> getGiftCertificateById(giftCertificate.getId())).collect(Collectors.toList());
     }
 
+    @Override
     public List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder) {
-        log.info("name sorting order is {}", nameOrder);
 
-        boolean hasToBeOrderedByName = nameOrder != null && (nameOrder.equals("ASC") || nameOrder.equals("DESC"));
-        boolean hasToBeOrderedByCreateDate = createDateOrder != null && (createDateOrder.equals("ASC") || createDateOrder.equals("DESC"));
+        log.info(nameOrder);
+        log.info(createDateOrder);
+
+        List<String> order = new ArrayList<>(asList("ASC", "DESC"));
+        boolean hasToBeOrderedByName = nameOrder != null && order.contains(nameOrder);
+        boolean hasToBeOrderedByCreateDate = createDateOrder != null && order.contains(createDateOrder);
+        log.info("bool " + hasToBeOrderedByName);
+        log.info("bool " + hasToBeOrderedByCreateDate);
+
         Comparator<GiftCertificate> nameComparator = null;
         Comparator<GiftCertificate> dateComparator = null;
 
         if (hasToBeOrderedByName) {
             log.info(SORTING_CERTIFICATES_BY_NAME);
             nameComparator = nameOrder.equals("ASC") ?
-                    Comparator.comparing(GiftCertificate::getName, Comparator.nullsLast(String::compareTo)) :
-                    Comparator.comparing(GiftCertificate::getName, Comparator.nullsLast(String::compareTo)).reversed();
+                    comparing(GiftCertificate::getName) :
+                    comparing(GiftCertificate::getName).reversed();
 
         }
         if (hasToBeOrderedByCreateDate) {
             log.info(SORTING_CERTIFICATES_BY_CREATE_DATE);
-
             dateComparator = createDateOrder.equals("ASC") ?
-                    Comparator.comparing(GiftCertificate::getCreateDate, Comparator.nullsLast(String::compareTo)) :
-                    Comparator.comparing(GiftCertificate::getCreateDate, Comparator.nullsLast(String::compareTo)).reversed();
+                    comparing(GiftCertificate::getCreateDate) :
+                    comparing(GiftCertificate::getCreateDate).reversed();
         }
 
-        if(hasToBeOrderedByName) {
+        if (hasToBeOrderedByName) {
             if (hasToBeOrderedByCreateDate)
                 commonList.sort(nameComparator.thenComparing(dateComparator));
             else
                 commonList.sort(nameComparator);
-        }else if (hasToBeOrderedByCreateDate)
+        } else if (hasToBeOrderedByCreateDate)
             commonList.sort(dateComparator);
 
         return commonList;
     }
 
+    @Override
     public List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder) {
 
-        List<GiftCertificate> tagFilter = tagName != null ? getCertificatesByTagName(tagName) : new ArrayList<>();
-        List<GiftCertificate> wordFilter = searchWord != null ? getCertificatesBySearchWord(searchWord) : new ArrayList<>();
+        List<GiftCertificate> commonList = new ArrayList<>();
+        if (tagName != null) {
+            commonList.addAll(getCertificatesByTagName(tagName));
+            if (searchWord != null)
+                commonList.retainAll(getCertificatesBySearchWord(searchWord));
+        } else if (searchWord != null) {
+            commonList.addAll(getCertificatesBySearchWord(searchWord));
+        }
 
-        List<GiftCertificate> commonList = new ArrayList<>(tagFilter);
-        commonList.retainAll(wordFilter);
-
-        List<GiftCertificate> result = new ArrayList<>(commonList);
-        result.addAll(tagFilter);
-        result.addAll(wordFilter);
-        result = sortCertificates(result, nameOrder, createDateOrder);
-
-        return result;
-    }
-
-    public List<Long> tagsByCertificateId(long certificate_id) {
-        log.info(GETTING_TAG_IDS_BY_CERTIFICATE_ID, certificate_id);
-
-        List<Long> tags = jdbcTemplate.query(GET_TAGS_BY_CERTIFICATE_ID, tagRowMapperForIds, certificate_id);
-
-        tagsListIsEmpty = tags.isEmpty();
-        return tagsListIsEmpty ? Collections.emptyList() : tags;
+        return sortCertificates(commonList, nameOrder, createDateOrder);
     }
 
     @Override
@@ -225,73 +221,99 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     }
 
     @Override
-    public Optional<GiftCertificate> updateGiftCertificate(long id, GiftCertificateRequestDTO giftCertificateRequestDTO) {
+    public GiftCertificate updateGiftCertificate(long id, GiftCertificate giftCertificate, List<Long> tagIds) {
         log.info(UPDATING_GIFT_CERTIFICATE, id);
 
-        return getGiftCertificateById(id)
-                .map(giftCertificate -> {
-                    joinTags(id, giftCertificateRequestDTO.tagIds());
+        thereAreNonExistingTags = !filterValidTags(tagIds);
+        boolean certificateDoesNotExist = getGiftCertificateById(id) == null;
+        if (thereAreNonExistingTags || certificateDoesNotExist) {
+            return null;
+        }
 
-                    //TODO check if every tag passed actually exists
-                    jdbcTemplate.update(UPDATE_GIFT_CERTIFICATE,
-                            giftCertificateRequestDTO.name(),
-                            giftCertificateRequestDTO.description(),
-                            giftCertificateRequestDTO.price(),
-                            giftCertificateRequestDTO.duration(),
-                            formattingDate(new Date()),
-                            id);
-                    return getGiftCertificateById(id);
-                }).orElse(Optional.empty());
+        joinTags(id, tagIds);
+        jdbcTemplate.update(UPDATE_GIFT_CERTIFICATE,
+                giftCertificate.getName(),
+                giftCertificate.getDescription(),
+                giftCertificate.getPrice(),
+                giftCertificate.getDuration(),
+                formattingDate(new Date()),
+                id);
 
+        return getGiftCertificateById(id);
     }
 
-    private void joinTags(Long certificateId, List<Long> tagIds) throws RuntimeException {
-        log.info("Joining tags to gift certificate with ID {}", certificateId);
-
-        deleteCertificateFromJoinTable(certificateId);
-
-        tagIds.forEach(tagId -> {
-            getTagById(tagId).orElseThrow(() -> new RuntimeException("Tag not found: " + tagId));
-            jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, certificateId, tagId);
-        });
-    }
 
     /**
      * TAG
      */
+
     @Override
-    public Optional<Tag> getTagById(long tagId) {
+    public Tag getTagById(long tagId) {
         log.info(GETTING_TAG_BY_ID, tagId);
         try {
-            Tag responseTag = jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
-            return Optional.ofNullable(responseTag);
+            return jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
         } catch (EmptyResultDataAccessException e) {
             log.warn(TAG_ID_NOT_FOUND.formatted(tagId));
-            return Optional.empty();
+            return null;
         }
     }
 
     @Override
-    public Optional<Long> getTagByName(String tagName) {
+    public List<Long> tagsByCertificateId(long certificate_id) {
+        log.info(GETTING_TAG_IDS_BY_CERTIFICATE_ID, certificate_id);
+
+        List<Long> tags = jdbcTemplate.query(GET_TAGS_BY_CERTIFICATE_ID, tagRowMapperForIds, certificate_id);
+
+        tagsListIsEmpty = tags.isEmpty();
+        return tagsListIsEmpty ? List.of() : tags;
+    }
+
+    @Override
+    public List<Tag> getTagsListByCertificateId(long certificate_id) {
+        return tagsByCertificateId(certificate_id).stream()
+                .map(this::getTagById)
+                .filter(Objects::nonNull)
+                .map(tag -> new Tag(tag.getId(), tag.getName()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Long getTagByName(String tagName) {
         log.info(GETTING_TAG_BY_NAME, tagName);
         try {
             Tag responseTag = jdbcTemplate.queryForObject(GET_TAG_BY_NAME, tagRowMapper, tagName);
-            return Optional.ofNullable(responseTag).map(Tag::getId);
+            if(responseTag != null)
+                return responseTag.getId();
+            else return null;
         } catch (EmptyResultDataAccessException e) {
             log.warn(TAG_NAME_NOT_FOUND.formatted(tagName));
-            return Optional.empty();
+            return null;
         }
     }
 
     @Override
-    public Optional<Long> saveTag(Tag tag) {
+    public Long saveTag(Tag tag) {
         log.info(SAVING_TAG_NAME);
 
-        Optional<Long> id = Optional.ofNullable(jdbcTemplate.queryForObject(SAVE_TAG, Long.class, tag.getName()));
+        if (!tag.getName().isEmpty() && getTagByName(tag.getName()) == null) {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(
+                    connection -> {
+                        PreparedStatement ps = connection.prepareStatement(SAVE_TAG, RETURN_GENERATED_KEYS);
+                        ps.setString(1, tag.getName());
+                        return ps;
+                    }, keyHolder);
 
-        id.ifPresent(tag::setId);
-        return id;
+            if (keyHolder.getKey() != null) {
+                Long id = keyHolder.getKey().longValue();
+                tag.setId(id);
+                return id;
+            }
+
+        }
+        return null;
     }
+
 
     @Override
     public boolean deleteTag(long tagId) {
@@ -300,16 +322,69 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         return jdbcTemplate.update(DELETE_TAG_BY_ID, tagId) > 0;
     }
 
+    @Override
+    public void deleteTagFromJoinTable(long tagId) throws RuntimeException {
+        log.info(DELETING_TAG_FROM_JOIN_TABLE);
+
+        Tag tag = getTagById(tagId);
+        if (tag == null)
+            throw new RuntimeException("This id does not exists");
+
+        if (getCertificatesByTagName(tag.getName()).isEmpty())
+            throw new RuntimeException("This id is not attached to any certificate");
+
+        jdbcTemplate.update(DELETE_TAG_FROM_JOINT_TABLE, tagId);
+    }
+
+    @Override
+    public void joinTags(Long certificateId, List<Long> tagIds) throws RuntimeException {
+        log.info("Joining tags to gift certificate with id {}", certificateId);
+
+        if (certificateId == null)
+            throw new RuntimeException("Certificate id is null");
+
+        if (getGiftCertificateById(certificateId) == null)
+            throw new RuntimeException("Gift certificate with id " + certificateId + " not found");
+
+        if (tagIds.isEmpty())
+            throw new RuntimeException("Tag list is empty");
+
+        deleteCertificateFromJoinTable(certificateId);
+        Set<Long> uniqueSet = new LinkedHashSet<>(tagIds);
+        List<Long> uniqueList = new ArrayList<>(uniqueSet);
+
+        uniqueList.forEach(tagId -> {
+            Tag tag = getTagById(tagId);
+            if (tag == null) {
+                throw new RuntimeException("Tag with id " + tagId + " not found");
+            }
+            jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, certificateId, tagId);
+        });
+
+    }
+
+    @Override
+    public boolean filterValidTags(List<Long> tagIds) {
+        log.info("Validating tags");
+
+        for (Long tagId : tagIds) {
+            boolean exists = getTagById(tagId) != null;
+            if (!exists)
+                return false;
+        }
+        return true;
+    }
+
     /**
      * AUXILIARY METHODS
      */
+    @Override
+    public String formattingDate(Date date) {
 
-    private String formattingDate(Date date) {
-
-        //TODO move timeZone to current place (+1 hour)
         TimeZone tz = TimeZone.getTimeZone("UTC");
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS");
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'");
         df.setTimeZone(tz);
         return df.format(date);
     }
 }
+
