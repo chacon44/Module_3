@@ -81,7 +81,7 @@ public class GiftCertificateService {
     }
 
     public ResponseEntity<?> deleteGiftCertificateById(Long giftCertificateId) {
-        certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificateById(giftCertificateId);
+        certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificate(giftCertificateId);
         
         if (certificateSuccessfullyDeleted) {
             giftCertificateTagRepository.deleteCertificateFromJoinTable(giftCertificateId);

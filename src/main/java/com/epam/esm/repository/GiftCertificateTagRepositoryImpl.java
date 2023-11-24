@@ -219,7 +219,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     }
 
     @Override
-    public boolean deleteGiftCertificateById(long giftCertificateId) {
+    public boolean deleteGiftCertificate(long giftCertificateId) {
         log.info(DELETING_GIFT_CERTIFICATE_BY_ID, giftCertificateId);
         return jdbcTemplate.update(DELETE_GIFT_CERTIFICATE_BY_ID, giftCertificateId) > 0;
     }

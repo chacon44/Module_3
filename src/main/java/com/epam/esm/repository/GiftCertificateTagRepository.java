@@ -23,8 +23,9 @@ public interface GiftCertificateTagRepository {
     List<GiftCertificate> getCertificatesBySearchWord(String searchWord);
     List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder);
     List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder);
+
     //DELETE
-    boolean deleteGiftCertificateById(long id);
+    boolean deleteGiftCertificate(long id);
 
     //UPDATE
     Optional<GiftCertificate> updateGiftCertificate(long id, GiftCertificateRequestDTO giftCertificate);

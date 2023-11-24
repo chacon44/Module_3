@@ -46,7 +46,7 @@ public class CertificatesController {
         return giftCertificateService.updateGiftCertificate(id, requestDTO);
     }
 
-    /** Format of POST
+    /* Format of POST
             "name" : "name",
             "description" : "description",
             "price" : 1.0,
