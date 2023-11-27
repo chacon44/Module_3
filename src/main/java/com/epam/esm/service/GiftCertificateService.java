@@ -72,12 +72,12 @@ public class GiftCertificateService {
 
     public ResponseEntity<?> getGiftCertificateById(Long giftCertificateId) {
 
-        GiftCertificate optionalCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
+        GiftCertificate giftCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 
-        certificateExists = optionalCertificate != null;
+        certificateExists = giftCertificate != null;
         if (certificateExists) {
 
-            return ResponseEntity.ok(optionalCertificate);
+            return ResponseEntity.ok(giftCertificate);
         } else {
             String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
 
