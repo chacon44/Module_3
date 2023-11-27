@@ -3,7 +3,7 @@ package com.epam.esm.queries;
 public class PostgreSqlQueries {
 
     //CERTIFICATES
-    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT DO NOTHING RETURNING certificate_id";
+    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?)";
 
     public static final String GET_GIFT_CERTIFICATE_BY_NAME = "SELECT * FROM certificates WHERE certificate_name = ?";
     public static final String GET_GIFT_CERTIFICATE_BY_SEARCH_WORD = "SELECT * FROM certificates WHERE certificate_name LIKE ? OR description LIKE ?";
@@ -19,7 +19,6 @@ public class PostgreSqlQueries {
 
     public static final String GET_TAG_BY_ID = "SELECT * FROM tag WHERE tag_id = ?";
     public static final String GET_TAG_BY_NAME = "SELECT * FROM tag WHERE tag_name = ?";
-    public static final String GET_ALL_TAGS = "SELECT * FROM tag";
 
     public static final String DELETE_TAG_BY_ID = "DELETE FROM tag WHERE tag_id = ?";
 

@@ -29,15 +29,15 @@ class GiftCertificateTagRepositoryImplTest {
     @Autowired
     private GiftCertificateTagRepository giftCertificateTagRepository;
 
-    public GiftCertificate giftCertificate = new GiftCertificate(
+    GiftCertificate giftCertificate = new GiftCertificate(
             "certificate for test", "description for test", 10.50, 10L);
 
-    public Date date = new Date();
+    Date date = new Date();
 
-    public List<Long> tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
-    public Long nonExistingId = 1000L;
-    public String nonExistingName = "xDfi4vc#sl";
-    public String existingCertificateName = "certificate";
+    List<Long> tagIdsList = new ArrayList<>();
+    Long nonExistingId = 1000L;
+    String nonExistingName = "xDfi4vc#sl";
+
     Tag tag1 = new Tag(1L, "tag 3");
     Tag tag2 = new Tag(2L, "tag 1");
     Tag tag3 = new Tag(3L, "tag 2");
@@ -50,6 +50,13 @@ class GiftCertificateTagRepositoryImplTest {
     List<GiftCertificate> giftCertificateList = asList(giftCertificate1,giftCertificate2,giftCertificate3);
     List<Tag> tagList = asList(tag1,tag2,tag3,tag4,tag5,tag6);
     public void createData(){
+
+        giftCertificate = new GiftCertificate(
+                "certificate for test", "description for test", 10.50, 10L);
+
+        date = new Date();
+
+        tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
 
         giftCertificate1.setId(1L);
         giftCertificate1.setName("certificate");
@@ -85,7 +92,7 @@ class GiftCertificateTagRepositoryImplTest {
     }
     //CERTIFICATES
     @Test
-    void saveGiftCertificate_correctRequest() {
+    void saveAndGetGiftCertificate_correctRequest() {
 
         String formattedDate = giftCertificateTagRepository.formattingDate(date);
 
@@ -104,11 +111,12 @@ class GiftCertificateTagRepositoryImplTest {
         assertEquals(formattedDate, giftCertificateSaved.getCreateDate());
         assertEquals(formattedDate, giftCertificateSaved.getLastUpdateDate());
         assertEquals(tagIdsList, giftCertificateTagRepository.tagsByCertificateId(actualIdSaved));
+
     }
 
     @Test
     void saveGiftCertificate_AlreadyExistingName() {
-        giftCertificate.setName(existingCertificateName);
+        giftCertificate.setName(giftCertificate2.getName());
         Long id = giftCertificateTagRepository.saveGiftCertificate(giftCertificate1, date, tagIdsList);
         assertNull(id);
     }
@@ -252,12 +260,9 @@ class GiftCertificateTagRepositoryImplTest {
     @Test
     void sortCertificates_noOrdersDefined(){
 
-
-        String nameOrder = null;
-        String dateOrder = null;
         List <GiftCertificate> expected = new ArrayList<>(List.of(giftCertificate2, giftCertificate1, giftCertificate3));
 
-        List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(expected, nameOrder, dateOrder);
+        List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(expected, null, null);
         assertEquals(expected, sorted);
     }
 

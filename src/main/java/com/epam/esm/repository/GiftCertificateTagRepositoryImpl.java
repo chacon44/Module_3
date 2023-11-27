@@ -162,14 +162,14 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     @Override
     public List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder) {
 
-        log.info(nameOrder);
-        log.info(createDateOrder);
+        log.info(nameOrder + " is");
+        log.info(createDateOrder + " is");
 
         List<String> order = new ArrayList<>(asList("ASC", "DESC"));
         boolean hasToBeOrderedByName = nameOrder != null && order.contains(nameOrder);
         boolean hasToBeOrderedByCreateDate = createDateOrder != null && order.contains(createDateOrder);
-        log.info("bool " + hasToBeOrderedByName);
-        log.info("bool " + hasToBeOrderedByCreateDate);
+        log.info("bool name order " + hasToBeOrderedByName);
+        log.info("bool date order " + hasToBeOrderedByCreateDate);
 
         Comparator<GiftCertificate> nameComparator = null;
         Comparator<GiftCertificate> dateComparator = null;
