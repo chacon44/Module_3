@@ -7,8 +7,6 @@ import com.epam.esm.model.Tag;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.repository.GiftCertificateTagRepositoryImpl;
 import config.TestRepositoryConfig;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,30 +31,36 @@ class GiftCertificateTagRepositoryImplTest {
     @Autowired
     private GiftCertificateTagRepository giftCertificateTagRepository;
 
-    //TODO put private
     private GiftCertificate giftCertificate = null;
 
-    Date date = new Date();
+    private final Date date = new Date();
 
-    List<Long> tagIdsList = new ArrayList<>();
-    Long nonExistingId = 1000L;
-    String nonExistingName = "xDfi4vc#sl";
+    private List<Long> tagIdsList = List.of();
+    private final Long nonExistingId = 1000L;
+    private final String nonExistingName = "xDfi4vc#sl";
 
-    Tag tag1 = new Tag(1L, "tag 3");
-    Tag tag2 = new Tag(2L, "tag 1");
-    Tag tag3 = new Tag(3L, "tag 2");
-    Tag tag4 = new Tag(4L, "blue");
-    Tag tag5 = new Tag(5L, "colour");
-    Tag tag6 = new Tag(6L, "animal 1");
-    GiftCertificate giftCertificate1 = new GiftCertificate();
-    GiftCertificate giftCertificate2 = new GiftCertificate();
-    GiftCertificate giftCertificate3 = new GiftCertificate();
-    List<GiftCertificate> giftCertificateList = asList(giftCertificate1,giftCertificate2,giftCertificate3);
-    List<Tag> tagList = asList(tag1,tag2,tag3,tag4,tag5,tag6);
-
+    private Tag
+            tag1 = new Tag(),
+            tag2 = new Tag(),
+            tag3 = new Tag(),
+            tag4 = new Tag(),
+            tag5 = new Tag(),
+            tag6 = new Tag();
+    private GiftCertificate
+            giftCertificate1 = new GiftCertificate(),
+            giftCertificate2 = new GiftCertificate(),
+            giftCertificate3 = new GiftCertificate();
+    private final List<GiftCertificate> giftCertificateList = asList(giftCertificate1, giftCertificate2, giftCertificate3);
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
+        tag1 = new Tag(1L, "tag 3");
+        tag2 = new Tag(2L, "tag 1");
+        tag3 = new Tag(3L, "tag 2");
+        tag4 = new Tag(4L, "blue");
+        tag5 = new Tag(5L, "colour");
+        tag6 = new Tag(6L, "animal 1");
+
         tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
 
         giftCertificate1.setId(1L);
@@ -66,7 +70,7 @@ class GiftCertificateTagRepositoryImplTest {
         giftCertificate1.setDuration(20L);
         giftCertificate1.setCreateDate("2023-11-21T16:48:04:309Z");
         giftCertificate1.setLastUpdateDate("2023-12-25T16:48:04:309Z");
-        giftCertificate1.setTags(asList(tag1,tag5));
+        giftCertificate1.setTags(asList(tag1, tag5));
 
         giftCertificate2.setId(2L);
         giftCertificate2.setName("certificate 2");
@@ -75,7 +79,7 @@ class GiftCertificateTagRepositoryImplTest {
         giftCertificate2.setDuration(11L);
         giftCertificate2.setCreateDate("2023-11-25T16:28:04:309Z");
         giftCertificate2.setLastUpdateDate("2023-12-20T16:48:04:309Z");
-        giftCertificate2.setTags(asList(tag2,tag6));
+        giftCertificate2.setTags(asList(tag2, tag6));
 
         giftCertificate3.setId(3L);
         giftCertificate3.setName("name 3");
@@ -139,7 +143,7 @@ class GiftCertificateTagRepositoryImplTest {
     }
 
     @Test
-    void getGiftCertificateByName_existingName(){
+    void getGiftCertificateByName_existingName() {
         GiftCertificate expected = giftCertificate1;
 
         GiftCertificate actual = giftCertificateTagRepository.getGiftCertificateByName("certificate");
@@ -147,15 +151,16 @@ class GiftCertificateTagRepositoryImplTest {
         assertNotNull(actual);
         assertEquals(expected, actual);
     }
+
     @Test
-    void getGiftCertificateByName_nonExistingName(){
+    void getGiftCertificateByName_nonExistingName() {
 
         GiftCertificate actual = giftCertificateTagRepository.getGiftCertificateByName(nonExistingName);
         assertNull(actual);
     }
 
     @Test
-    void getCertificatesByTagName_existingTagName(){
+    void getCertificatesByTagName_existingTagName() {
 
         List<GiftCertificate> expected = new ArrayList<>();
         expected.add(giftCertificate1);
@@ -163,11 +168,11 @@ class GiftCertificateTagRepositoryImplTest {
 
         List<GiftCertificate> actual = giftCertificateTagRepository.getCertificatesByTagName("colour");
 
-        assertEquals(expected,actual);
+        assertEquals(expected, actual);
     }
 
     @Test
-    void getCertificatesByTagName_nonExistingTagName(){
+    void getCertificatesByTagName_nonExistingTagName() {
 
         List<GiftCertificate> actual = giftCertificateTagRepository.getCertificatesByTagName(nonExistingName);
 
@@ -175,32 +180,32 @@ class GiftCertificateTagRepositoryImplTest {
     }
 
     @Test
-    void getCertificatesBySearchWord_existingWord(){
+    void getCertificatesBySearchWord_existingWord() {
 
         List<GiftCertificate> expected = asList(giftCertificate1, giftCertificate2);
         List<GiftCertificate> actual = giftCertificateTagRepository.getCertificatesBySearchWord("certificate");
 
-        assertEquals(expected,actual);
+        assertEquals(expected, actual);
     }
 
     @Test
-    void getCertificatesBySearchWord_partiallyContainsWord(){
+    void getCertificatesBySearchWord_partiallyContainsWord() {
 
         List<GiftCertificate> expected = asList(giftCertificate1, giftCertificate2);
         List<GiftCertificate> actual = giftCertificateTagRepository.getCertificatesBySearchWord("cert");
 
-        assertEquals(expected,actual);
+        assertEquals(expected, actual);
     }
 
     @Test
-    void getCertificatesBySearchWord_nonExistingWord(){
+    void getCertificatesBySearchWord_nonExistingWord() {
 
         List<GiftCertificate> actual = giftCertificateTagRepository.getCertificatesBySearchWord(nonExistingName);
         assertTrue(actual.isEmpty());
     }
 
     @Test
-    void sortCertificates_sortByNameOnly_ascendantOrder(){
+    void sortCertificates_sortByNameOnly_ascendantOrder() {
 
         giftCertificate1.setName("position 2");
         giftCertificate3.setName("position 1");
@@ -208,13 +213,14 @@ class GiftCertificateTagRepositoryImplTest {
 
         String nameOrder = "ASC";
         String dateOrder = "";
-        List <GiftCertificate> expected = new ArrayList<>((asList(giftCertificate3 ,giftCertificate1, giftCertificate2)));
+        List<GiftCertificate> expected = new ArrayList<>((asList(giftCertificate3, giftCertificate1, giftCertificate2)));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(giftCertificateList, nameOrder, dateOrder);
         assertEquals(expected, sorted);
     }
+
     @Test
-    void sortCertificates_sortByNameOnly_descendantOrder(){
+    void sortCertificates_sortByNameOnly_descendantOrder() {
 
         giftCertificate1.setName("position 2");
         giftCertificate3.setName("position 1");
@@ -222,24 +228,25 @@ class GiftCertificateTagRepositoryImplTest {
 
         String nameOrder = "DESC";
         String dateOrder = "";
-        List <GiftCertificate> expected = new ArrayList<>((asList(giftCertificate2 ,giftCertificate1, giftCertificate3)));
+        List<GiftCertificate> expected = new ArrayList<>((asList(giftCertificate2, giftCertificate1, giftCertificate3)));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(giftCertificateList, nameOrder, dateOrder);
         assertEquals(expected, sorted);
     }
+
     @Test
-    void sortCertificates_sortByDateOnly_descendantOrder(){
+    void sortCertificates_sortByDateOnly_descendantOrder() {
 
         String nameOrder = "";
         String dateOrder = "ASC";
-        List <GiftCertificate> expected = new ArrayList<>((asList(giftCertificate1, giftCertificate3, giftCertificate2)));
+        List<GiftCertificate> expected = new ArrayList<>((asList(giftCertificate1, giftCertificate3, giftCertificate2)));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(giftCertificateList, nameOrder, dateOrder);
         assertEquals(expected, sorted);
     }
 
     @Test
-    void sortCertificates_sortByNameAndDate(){
+    void sortCertificates_sortByNameAndDate() {
 
         giftCertificate1.setName("position 2");
         giftCertificate2.setName("position 2");
@@ -251,16 +258,16 @@ class GiftCertificateTagRepositoryImplTest {
 
         String nameOrder = "DESC";
         String dateOrder = "ASC";
-        List <GiftCertificate> expected = new ArrayList<>((asList(giftCertificate2, giftCertificate1, giftCertificate3)));
+        List<GiftCertificate> expected = new ArrayList<>((asList(giftCertificate2, giftCertificate1, giftCertificate3)));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(giftCertificateList, nameOrder, dateOrder);
         assertEquals(expected, sorted);
     }
 
     @Test
-    void sortCertificates_noOrdersDefined(){
+    void sortCertificates_noOrdersDefined() {
 
-        List <GiftCertificate> expected = new ArrayList<>(List.of(giftCertificate2, giftCertificate1, giftCertificate3));
+        List<GiftCertificate> expected = new ArrayList<>(List.of(giftCertificate2, giftCertificate1, giftCertificate3));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.sortCertificates(expected, null, null);
         assertEquals(expected, sorted);
@@ -271,34 +278,35 @@ class GiftCertificateTagRepositoryImplTest {
 
         String nameOrder = "DESC";
         String dateOrder = "ASC";
-        List <GiftCertificate> expected = new ArrayList<>(List.of(giftCertificate2));
+        List<GiftCertificate> expected = new ArrayList<>(List.of(giftCertificate2));
 
         List<GiftCertificate> sorted = giftCertificateTagRepository.filterCertificates("tag 1", "certificate", nameOrder, dateOrder);
         assertEquals(expected, sorted);
     }
 
     @Test
-    void deleteCertificate_existingCertificate(){
+    void deleteCertificate_existingCertificate() {
         assertTrue(giftCertificateTagRepository.deleteGiftCertificate(giftCertificate1.getId()));
     }
 
     @Test
-    void deleteCertificate_nonExistingCertificate(){
+    void deleteCertificate_nonExistingCertificate() {
         assertFalse(giftCertificateTagRepository.deleteGiftCertificate(nonExistingId));
     }
 
     @Test
-    void updateCertificate_existingCertificate(){
+    void updateCertificate_existingCertificate() {
 
         Long id = giftCertificate1.getId();
         assertNotNull(giftCertificateTagRepository.updateGiftCertificate(id, giftCertificate, tagIdsList));
     }
 
     @Test
-    void updateCertificate_nonExistingCertificate(){
+    void updateCertificate_nonExistingCertificate() {
 
         assertNull(giftCertificateTagRepository.updateGiftCertificate(nonExistingId, giftCertificate, tagIdsList));
     }
+
     //TAGS
     @Test
     void getTagById_getExistingTag() {
@@ -370,7 +378,7 @@ class GiftCertificateTagRepositoryImplTest {
         Long id = giftCertificateTagRepository.saveTag(tag1);
 
         assertNotNull(id);
-        int expected = tagList.size() + 1;
+        int expected = 7;
         assertEquals(expected, id);
     }
 
