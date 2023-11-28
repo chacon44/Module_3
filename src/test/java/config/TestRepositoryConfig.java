@@ -20,7 +20,6 @@ public class TestRepositoryConfig {
                 .addScript("data.sql")
                 .build();
     }
-
     @Bean
     public JdbcTemplate jdbcTemplate() {
         return new JdbcTemplate(dataSource());

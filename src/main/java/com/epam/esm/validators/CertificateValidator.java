@@ -1,6 +1,6 @@
 package com.epam.esm.validators;
 
-import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
+import com.epam.esm.model.GiftCertificate;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -8,20 +8,20 @@ import java.util.List;
 
 @Slf4j
 public class CertificateValidator {
-    public static String validateRequest(GiftCertificateRequestDTO requestDTO) {
+    public static String validateRequest(GiftCertificate giftCertificate) {
 
         List<String> errors = new ArrayList<>();
 
-        if (requestDTO.name() == null || requestDTO.name().isEmpty()) {
+        if (giftCertificate.getName() == null || giftCertificate.getName().isEmpty()) {
             errors.add("Name is required");
         }
 
-        if (requestDTO.description() == null || requestDTO.description().isEmpty()) {
+        if (giftCertificate.getDescription() == null || giftCertificate.getDescription().isEmpty()) {
             errors.add("Description is required");
         }
 
         try {
-            double price = Double.parseDouble(requestDTO.price().toString());
+            double price = Double.parseDouble(giftCertificate.getPrice().toString());
             if (Double.isNaN(price) || Double.isInfinite(price)) {
                 errors.add("Price must be a finite number");
             } else if (price < 0) {
@@ -32,7 +32,7 @@ public class CertificateValidator {
         }
 
         try {
-            long duration = Long.parseLong(requestDTO.duration().toString());
+            long duration = Long.parseLong(giftCertificate.getDuration().toString());
             if (duration < 0) {
                 errors.add("Duration must be non-negative");
             }

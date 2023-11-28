@@ -14,7 +14,7 @@ public class TagsController {
 
     @PostMapping(value = "/tag", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> postTag(@RequestBody TagRequestDTO requestDTO) {
-        return tagService.saveTag(requestDTO);
+        return tagService.saveTag(requestDTO.name());
     }
     @GetMapping(value = "/tag/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> getTagById(@PathVariable long id) {

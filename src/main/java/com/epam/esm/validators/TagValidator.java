@@ -1,15 +1,8 @@
 package com.epam.esm.validators;
 
-import com.epam.esm.Dto.Tag.TagRequestDTO;
-import lombok.extern.slf4j.Slf4j;
-
-@Slf4j
 public class TagValidator {
-    public static String validateForSave (TagRequestDTO requestDTO){
+    public static String validateForSave (String tagName){
 
-        if (requestDTO.name() == null || requestDTO.name().isEmpty()) {
-            return "Tag name is required";
-        }
-        return "Valid";
+        return tagName == null || tagName.isEmpty() ? "Tag name is required" : "Valid";
     }
 }
