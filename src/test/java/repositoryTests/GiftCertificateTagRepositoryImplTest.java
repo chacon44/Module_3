@@ -7,10 +7,13 @@ import com.epam.esm.model.Tag;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.repository.GiftCertificateTagRepositoryImpl;
 import config.TestRepositoryConfig;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -22,6 +25,7 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(SpringExtension.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @ActiveProfiles(profiles = "h2")
 @ContextConfiguration(classes = {TestRepositoryConfig.class, GiftCertificateTagRepositoryImpl.class, TagRowMapper.class, GiftCertificateRowMapper.class})
 class GiftCertificateTagRepositoryImplTest {
@@ -29,8 +33,8 @@ class GiftCertificateTagRepositoryImplTest {
     @Autowired
     private GiftCertificateTagRepository giftCertificateTagRepository;
 
-    GiftCertificate giftCertificate = new GiftCertificate(
-            "certificate for test", "description for test", 10.50, 10L);
+    //TODO put private
+    private GiftCertificate giftCertificate = null;
 
     Date date = new Date();
 
@@ -49,13 +53,10 @@ class GiftCertificateTagRepositoryImplTest {
     GiftCertificate giftCertificate3 = new GiftCertificate();
     List<GiftCertificate> giftCertificateList = asList(giftCertificate1,giftCertificate2,giftCertificate3);
     List<Tag> tagList = asList(tag1,tag2,tag3,tag4,tag5,tag6);
-    public void createData(){
 
-        giftCertificate = new GiftCertificate(
-                "certificate for test", "description for test", 10.50, 10L);
 
-        date = new Date();
-
+    @BeforeEach
+    void setUp(){
         tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
 
         giftCertificate1.setId(1L);
@@ -84,12 +85,12 @@ class GiftCertificateTagRepositoryImplTest {
         giftCertificate3.setCreateDate("2023-11-24T16:18:04:309Z");
         giftCertificate3.setLastUpdateDate("2023-12-10T16:48:04:309Z");
         giftCertificate3.setTags(asList(tag1, tag3, tag4, tag5));
+
+        giftCertificate = new GiftCertificate(
+                "certificate for test", "description for test", 10.50, 10L);
+
     }
 
-    @BeforeEach
-    void setUp(){
-        createData();
-    }
     //CERTIFICATES
     @Test
     void saveAndGetGiftCertificate_correctRequest() {
@@ -111,7 +112,6 @@ class GiftCertificateTagRepositoryImplTest {
         assertEquals(formattedDate, giftCertificateSaved.getCreateDate());
         assertEquals(formattedDate, giftCertificateSaved.getLastUpdateDate());
         assertEquals(tagIdsList, giftCertificateTagRepository.tagsByCertificateId(actualIdSaved));
-
     }
 
     @Test
@@ -302,14 +302,14 @@ class GiftCertificateTagRepositoryImplTest {
     //TAGS
     @Test
     void getTagById_getExistingTag() {
-        Tag optionalTag = giftCertificateTagRepository.getTagById(tag5.getId());
-        assertNotNull(optionalTag);
+        Tag tag = giftCertificateTagRepository.getTagById(tag5.getId());
+        assertNotNull(tag);
     }
 
     @Test
     void getTagById_getNonExistingTag() {
-        Tag optionalTag = giftCertificateTagRepository.getTagById(nonExistingId);
-        assertNull(optionalTag);
+        Tag tag = giftCertificateTagRepository.getTagById(nonExistingId);
+        assertNull(tag);
     }
 
     @Test

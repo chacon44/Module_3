@@ -18,6 +18,7 @@ import static com.epam.esm.exceptions.Codes.*;
 import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.BooleanFlags.*;
 
+@SuppressWarnings("rawtypes")
 @Slf4j
 @Service
 public class GiftCertificateService {
@@ -70,7 +71,7 @@ public class GiftCertificateService {
 
     }
 
-    public ResponseEntity<?> getGiftCertificateById(Long giftCertificateId) {
+    public ResponseEntity getGiftCertificateById(Long giftCertificateId) {
 
         GiftCertificate giftCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 

@@ -31,14 +31,14 @@ public class CertificatesController {
             @RequestParam(required = false) String searchWord,
             @RequestParam(required = false) String nameOrder,
             @RequestParam(required = false) String createDateOrder) {
-        String encodedTagName;
-        try {
-            encodedTagName = URLEncoder.encode(tagName, StandardCharsets.UTF_8);
-            System.out.println("Encoded Tag Name: " + encodedTagName);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        String encodedTagName = "";
+//        try {
+//            encodedTagName = URLEncoder.encode(tagName, StandardCharsets.UTF_8);
+//            System.out.println("Encoded Tag Name: " + encodedTagName);
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
         return giftCertificateService.getFilteredCertificates(
                 tagName,
                 searchWord,

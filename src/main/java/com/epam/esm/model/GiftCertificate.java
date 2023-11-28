@@ -2,6 +2,7 @@ package com.epam.esm.model;
 
 import lombok.*;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Setter
@@ -25,5 +26,17 @@ public class GiftCertificate {
         this.price = price;
         this.duration = duration;
     }
-}
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        GiftCertificate that = (GiftCertificate) o;
+        return Objects.equals(id, that.id) && Objects.equals(name, that.name) && Objects.equals(description, that.description) && Objects.equals(price, that.price) && Objects.equals(duration, that.duration) && Objects.equals(createDate, that.createDate) && Objects.equals(lastUpdateDate, that.lastUpdateDate) && Objects.equals(tags, that.tags);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, description, price, duration, createDate, lastUpdateDate, tags);
+    }
+}

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
@@ -56,7 +57,7 @@ public class CertificatesControllerTest {
 
     public void createData(){
 
-        GiftCertificateRequestDTO giftCertificate = new GiftCertificateRequestDTO(
+        giftCertificate = new GiftCertificateRequestDTO(
                 "certificate for test", "description for test", 10.50, 10L, asList(2L, 4L));
 
         date = new Date();
@@ -88,7 +89,7 @@ public class CertificatesControllerTest {
 
         when(giftCertificateService.getGiftCertificateById(eq(1L))).thenReturn(ResponseEntity.ok(giftCertificateResponse1));
 
-        doNothing().when(giftCertificateService.saveGiftCertificate(eq(giftCertificate)));
+        when(giftCertificateService.saveGiftCertificate(eq(giftCertificate))).thenReturn(new ResponseEntity(giftCertificateResponse1, HttpStatus.CREATED));
 
         mockMvc.perform(post("/certificate").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(giftCertificate)))
@@ -98,11 +99,10 @@ public class CertificatesControllerTest {
                 .andExpect(jsonPath("$.name", is(giftCertificateResponse1.getName())))
                 .andExpect(jsonPath("$.description", is(giftCertificateResponse1.getDescription())))
                 .andExpect(jsonPath("$.price", is(giftCertificateResponse1.getPrice())))
-                .andExpect(jsonPath("$.duration", is(giftCertificateResponse1.getDuration())))
-                .andExpect(jsonPath("$.create_date", is(giftCertificateResponse1.getCreateDate())))
-                .andExpect(jsonPath("$.last_update_date", is(giftCertificateResponse1.getLastUpdateDate())))
-                .andExpect(jsonPath("$.tags", is(giftCertificateResponse1.getTags())))
-
+                .andExpect(jsonPath("$.duration", is(giftCertificateResponse1.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificateResponse1.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificateResponse1.getLastUpdateDate())))
+                .andExpect(jsonPath("$.tags", is(asJsonString(giftCertificateResponse1.getTags()))))
                 .andExpect(status().isCreated());
     }
 
