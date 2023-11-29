@@ -67,6 +67,7 @@ public class CertificateServiceTest {
     @Test
     public void saveAndGetSaved(){
 
+        List<Long> tagIdsList = List.of(1L, 3L, 4L, 5L);
         //ACT
         giftCertificateService.saveGiftCertificate(request, tagIdsList);
         giftCertificateService.getGiftCertificateById(1L);

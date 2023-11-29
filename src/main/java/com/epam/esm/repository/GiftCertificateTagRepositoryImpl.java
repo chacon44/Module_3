@@ -76,12 +76,15 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                     return ps;
                 }, keyHolder);
 
-        if (keyHolder.getKey() != null) {
-            Long id = keyHolder.getKey().longValue();
+        Map<String, Object> keys = keyHolder.getKeys();
+        if (keys != null) {
+            // Get the generated certificate ID and return a new Tag object
+            Long id = ((Number) keys.get("certificate_id")).longValue();
             giftCertificate.setId(id);
             joinTags(id, tagList);
             return giftCertificate;
-        } else return null;
+        }
+        return null;
     }
 
     @Override
@@ -91,13 +94,13 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         try {
             GiftCertificate giftCertificate = jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_ID, certificateRowMapper, giftCertificateId);
 
-            if (giftCertificate != null) {
-
+            if (giftCertificate == null)
+                return null;
+            else {
                 List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificateId);
                 giftCertificate.setTags(tagsToAdd);
-
                 return giftCertificate;
-            } else return null;
+            }
         } catch (EmptyResultDataAccessException e) {
             log.warn(CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId));
             return null;
@@ -320,18 +323,21 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         if (tagIds.isEmpty())
             throw new RuntimeException("Tag list is empty");
 
-        if (getTagsListByCertificateId(giftCertificateId) != null) {
+        if (tagIdListByCertificateId(giftCertificateId) != null
+        &&
+                !tagIdListByCertificateId(giftCertificateId).equals(tagIds)) {
             log.info("There are tags attached, delete from joint table");
             jdbcTemplate.update(DELETE_CERTIFICATE_FROM_JOINT_TABLE, giftCertificateId);
+            tagIds.forEach(tagId -> {
+                Tag tag = getTagById(tagId);
+                if (tag == null) {
+                    throw new RuntimeException("Tag with id " + tagId + " not found");
+                }
+                jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, giftCertificateId, tagId);
+            });
         }
 
-        tagIds.forEach(tagId -> {
-            Tag tag = getTagById(tagId);
-            if (tag == null) {
-                throw new RuntimeException("Tag with id " + tagId + " not found");
-            }
-            jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, giftCertificateId, tagId);
-        });
+
     }
 
     @Override

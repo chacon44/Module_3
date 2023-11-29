@@ -1,6 +1,7 @@
 package com.epam.esm.controller;
 
 import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
+import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.service.GiftCertificateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +16,13 @@ public class CertificatesController {
 
     @PostMapping(value = "/certificate", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> postCertificate(@RequestBody GiftCertificateRequestDTO requestDTO) {
-        return giftCertificateService.saveGiftCertificate(requestDTO.giftCertificate(), requestDTO.tagIds());
+        GiftCertificate giftCertificate = new GiftCertificate(
+                requestDTO.name(),
+                requestDTO.description(),
+                requestDTO.price(),
+                requestDTO.duration()
+        );
+        return giftCertificateService.saveGiftCertificate(giftCertificate, requestDTO.tagIds());
     }
 
     @GetMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
@@ -44,7 +51,13 @@ public class CertificatesController {
 
     @PutMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> updateCertificate(@PathVariable long id, @RequestBody GiftCertificateRequestDTO requestDTO) {
-        return giftCertificateService.updateGiftCertificate(id, requestDTO.giftCertificate(), requestDTO.tagIds());
+        GiftCertificate giftCertificate = new GiftCertificate(
+                requestDTO.name(),
+                requestDTO.description(),
+                requestDTO.price(),
+                requestDTO.duration()
+        );
+        return giftCertificateService.updateGiftCertificate(id, giftCertificate, requestDTO.tagIds());
     }
 
     /* Format of POST
