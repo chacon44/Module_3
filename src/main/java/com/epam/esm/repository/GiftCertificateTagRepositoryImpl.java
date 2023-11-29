@@ -59,9 +59,6 @@ public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper 
         if (certificateNameExists)
             return null;
 
-        //eliminate duplicated
-        tagList = tagList.stream().distinct().collect(toList());
-
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(
                 connection -> {

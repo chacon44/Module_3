@@ -35,13 +35,23 @@ public class GiftCertificateService {
         ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate);
         if (requestValidationMessage != null) return requestValidationMessage;
 
-        //eliminate duplicated
+        //eliminate duplicated tag ids
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
 
         GiftCertificate saveGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, new Date(), tagIdsList);
 
         certificateSuccesfullySaved = saveGiftCertificate != null;
-        if (!certificateSuccesfullySaved) {
+        if (certificateSuccesfullySaved) {
+            GiftCertificate response = giftCertificateTagRepository.getGiftCertificateByName(giftCertificate.getName());
+
+            certificateExists = response.equals(saveGiftCertificate);
+            if (certificateExists)
+                return new ResponseEntity<>(response, HttpStatus.CREATED);
+            else {
+                ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_COULD_NOT_BE_SAVED, 500);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            }
+        } else {
             GiftCertificate giftCertificateByName = giftCertificateTagRepository.getGiftCertificateByName(giftCertificate.getName());
             if (giftCertificateByName != null) {
                 Long idFound = giftCertificateByName.getId();
@@ -51,18 +61,7 @@ public class GiftCertificateService {
             }
         }
 
-        if (saveGiftCertificate != null) {
-            GiftCertificate response = giftCertificateTagRepository.getGiftCertificateById(saveGiftCertificate.getId());
-
-            certificateExists = response != null;
-            if (certificateExists)
-                return new ResponseEntity<>(response, HttpStatus.CREATED);
-            else {
-                ErrorDTO errorResponse = new ErrorDTO(CERTIFICATE_COULD_NOT_BE_SAVED, 500);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
-            }
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 
     }
 

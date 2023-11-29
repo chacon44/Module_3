@@ -94,9 +94,7 @@ public class TagService {
     private ResponseEntity<ErrorDTO> validateTagRequest(String tagName) {
         String validationMessage = TagValidator.validateForSave(tagName);
         tagRequestIsValid = validationMessage.equals("Valid");
-        if (!tagRequestIsValid) {
-            return ResponseEntity.badRequest().body(new ErrorDTO(validationMessage, TAG_BAD_REQUEST));
-        }
-        return null;
+        return tagRequestIsValid ? null :
+                ResponseEntity.badRequest().body(new ErrorDTO(validationMessage, TAG_BAD_REQUEST));
     }
 }
