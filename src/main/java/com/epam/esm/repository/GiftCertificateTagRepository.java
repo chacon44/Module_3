@@ -3,7 +3,6 @@ package com.epam.esm.repository;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 
-import java.util.Date;
 import java.util.List;
 
 public interface GiftCertificateTagRepository {
@@ -13,7 +12,7 @@ public interface GiftCertificateTagRepository {
     */
 
     //SAVE
-    GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, Date date, List<Long> tagList);
+    GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList);
 
     //GET
     GiftCertificate getGiftCertificateById(long id);

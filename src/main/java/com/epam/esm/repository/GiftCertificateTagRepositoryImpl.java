@@ -52,13 +52,14 @@ public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper 
      * CERTIFICATE
      */
     @Override
-    public GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, Date date, List<Long> tagList) {
+    public GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList) {
         log.info(SAVING_GIFT_CERTIFICATE);
 
         certificateNameExists = getGiftCertificateByName(giftCertificate.getName()) != null;
         if (certificateNameExists)
             return null;
 
+        Date date = new Date();
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(
                 connection -> {

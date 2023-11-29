@@ -99,7 +99,7 @@ class GiftCertificateTagRepositoryImplTest {
     @Test
     void saveAndGetGiftCertificate_correctRequest() {
 
-        GiftCertificate savedGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, date, tagIdsList);
+        GiftCertificate savedGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, tagIdsList);
         assertNotNull(savedGiftCertificate);
         //assertNotNull(savedGiftCertificate.getTags());
         Long expectedIdSaved = giftCertificateList.size() + 1L;
@@ -121,7 +121,7 @@ class GiftCertificateTagRepositoryImplTest {
     @Test
     void saveGiftCertificate_AlreadyExistingName() {
         giftCertificate.setName(giftCertificate2.getName());
-        GiftCertificate giftCertificateSaved = giftCertificateTagRepository.saveGiftCertificate(giftCertificate1, date, tagIdsList);
+        GiftCertificate giftCertificateSaved = giftCertificateTagRepository.saveGiftCertificate(giftCertificate1, tagIdsList);
         assertNull(giftCertificateSaved);
     }
 

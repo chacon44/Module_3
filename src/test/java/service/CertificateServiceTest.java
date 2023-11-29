@@ -12,8 +12,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -26,32 +24,25 @@ public class CertificateServiceTest {
     GiftCertificateTagRepository giftCertificateTagRepository;
 
 
-    private GiftCertificate response = new GiftCertificate();
-    private GiftCertificate request = new GiftCertificate();
-    private final Date date = new Date();
+    private GiftCertificate
+            response = new GiftCertificate(),
+            request = new GiftCertificate();
 
-    List<Long> tagIdsList = new ArrayList<>();
-
-    private Tag
-            tag1 = new Tag(),
-            tag2 = new Tag(),
-            tag3 = new Tag(),
-            tag4 = new Tag(),
-            tag5 = new Tag(),
-            tag6 = new Tag();
+    List<Long> tagIdsList = null;
 
     private GiftCertificateService giftCertificateService;
 
     public void createData() {
 
-        tag1 = new Tag(1L, "tag 3");
-        tag2 = new Tag(2L, "tag 1");
-        tag3 = new Tag(3L, "tag 2");
-        tag4 = new Tag(4L, "blue");
-        tag5 = new Tag(5L, "colour");
-        tag6 = new Tag(6L, "animal 1");
+        Tag
+                tag1 = new Tag(1L, "tag 3"),
+                tag2 = new Tag(2L, "tag 1"),
+                tag3 = new Tag(3L, "tag 2"),
+                tag4 = new Tag(4L, "blue"),
+                tag5 = new Tag(5L, "colour"),
+                tag6 = new Tag(6L, "animal 1");
 
-        tagIdsList = asList(1L, 3L, 4L, 5L);
+        List<Long> tagIdsList = List.of(1L, 3L, 4L, 5L);
 
         request = new GiftCertificate(
                 "certificate for test", "description for test", 10.50, 10L);
@@ -83,7 +74,6 @@ public class CertificateServiceTest {
         Mockito.verify(giftCertificateTagRepository, Mockito.times(1))
                 .saveGiftCertificate(
                         Mockito.eq(request),
-                        Mockito.eq(date),
                         Mockito.eq(tagIdsList));
 
         Mockito.verify(giftCertificateTagRepository, Mockito.times(1))
@@ -92,14 +82,8 @@ public class CertificateServiceTest {
     }
 
     @Test
-    public void search_For_Non_Saved_Question() {}
-
-    @Test
-    public void get_Non_Saved() {
+    public void getNonSavedCertificate() {
+        giftCertificateService.getGiftCertificateById(1000L);
+        Mockito.verify(giftCertificateTagRepository).getGiftCertificateById(1000L);
     }
-
-    @Test
-    public void save_Question_Multiple_Times() {}
-
-
 }
