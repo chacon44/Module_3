@@ -37,7 +37,6 @@ public class GiftCertificateService {
 
         //eliminate duplicated tag ids
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
-        //Date date = new Date();
         GiftCertificate saveGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, tagIdsList);
 
         certificateSuccesfullySaved = saveGiftCertificate != null;

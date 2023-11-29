@@ -37,11 +37,12 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     private final GiftCertificateRowMapper certificateRowMapper;
     private final GiftCertificateRowMapperForIds certificateRowMapperForIds = new GiftCertificateRowMapperForIds();
 
-public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper) {
+    public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.tagRowMapper = tagRowMapper;
         this.certificateRowMapper = certificateRowMapper;
     }
+
     private final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'");
 
     {
@@ -78,7 +79,7 @@ public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper 
         if (keyHolder.getKey() != null) {
             Long id = keyHolder.getKey().longValue();
             giftCertificate.setId(id);
-            joinTags(id,tagList);
+            joinTags(id, tagList);
             return giftCertificate;
         } else return null;
     }
@@ -277,22 +278,27 @@ public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper 
 
     @Override
     public Tag saveTag(String tagName) {
-        log.info(SAVING_TAG_NAME);
-
+        // Check if the tag name is not empty and does not exist in the database
         if (!tagName.isEmpty() && getTagByName(tagName) == null) {
             KeyHolder keyHolder = new GeneratedKeyHolder();
-            jdbcTemplate.update(
-                    connection -> {
-                        PreparedStatement ps = connection.prepareStatement(SAVE_TAG, RETURN_GENERATED_KEYS);
-                        ps.setString(1, tagName);
-                        return ps;
-                    }, keyHolder);
 
-            if (keyHolder.getKey() != null) {
-                Long id = keyHolder.getKey().longValue();
+            // Execute the SQL query to insert the new tag
+            jdbcTemplate.update(connection -> {
+                PreparedStatement ps = connection.prepareStatement(SAVE_TAG, RETURN_GENERATED_KEYS);
+                ps.setString(1, tagName);
+                return ps;
+            }, keyHolder);
+
+            // Retrieve the generated keys
+            Map<String, Object> keys = keyHolder.getKeys();
+            if (keys != null) {
+                // Get the generated tag ID and return a new Tag object
+                Long id = ((Number) keys.get("tag_id")).longValue();
                 return new Tag(id, tagName);
             }
         }
+
+        // Return null if the tag could not be saved
         return null;
     }
 
@@ -314,7 +320,7 @@ public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper 
         if (tagIds.isEmpty())
             throw new RuntimeException("Tag list is empty");
 
-        if(getTagsListByCertificateId(giftCertificateId) != null) {
+        if (getTagsListByCertificateId(giftCertificateId) != null) {
             log.info("There are tags attached, delete from joint table");
             jdbcTemplate.update(DELETE_CERTIFICATE_FROM_JOINT_TABLE, giftCertificateId);
         }

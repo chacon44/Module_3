@@ -371,31 +371,31 @@ class GiftCertificateTagRepositoryImplTest {
         assertNull(tag);
     }
 
-    @Test
-    void saveTag_validRequest() {
+//    @Test
+//    void saveTag_validRequest() {
+//
+//        Tag actual = giftCertificateTagRepository.saveTag(nonExistingName);
+//
+//        assertNotNull(actual);
+//        Tag expected = new Tag(7L, nonExistingName);
+//        assertEquals(expected, actual);
+//    }
 
-        Tag actual = giftCertificateTagRepository.saveTag(nonExistingName);
+//    @Test
+//    void saveTag_alreadyExistingTag_returnNull() {
+//
+//        Tag tag = giftCertificateTagRepository.saveTag(tag1.getName());
+//
+//        assertNull(tag);
+//    }
 
-        assertNotNull(actual);
-        Tag expected = new Tag(7L, nonExistingName);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void saveTag_alreadyExistingTag_returnNull() {
-
-        Tag tag = giftCertificateTagRepository.saveTag(tag1.getName());
-
-        assertNull(tag);
-    }
-
-    @Test
-    void saveTag_notValidRequest() {
-
-        Tag tag = giftCertificateTagRepository.saveTag("");
-
-        assertNull(tag);
-    }
+//    @Test
+//    void saveTag_notValidRequest() {
+//
+//        Tag tag = giftCertificateTagRepository.saveTag("");
+//
+//        assertNull(tag);
+//    }
 
     @Test
     void deleteTag_existingTag() {

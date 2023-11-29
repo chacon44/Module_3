@@ -31,37 +31,24 @@ public class TagService {
     public ResponseEntity<?> saveTag(String tagName) {
         ResponseEntity<ErrorDTO> requestValidationMessage = validateTagRequest(tagName);
         if (requestValidationMessage != null) return requestValidationMessage;
-        log.info("Step 1");
         tagExists = giftCertificateTagRepository.getTagByName(tagName) != null;
 
         if (tagExists) {
-            log.info("Step 2");
 
             Tag tagFound = giftCertificateTagRepository.getTagByName(tagName);
-            log.info("Step 3");
-
             String message = TAG_ALREADY_EXISTS.formatted(tagFound.getId());
             return ResponseEntity.badRequest().body(new ErrorDTO(message, TAG_BAD_REQUEST));
         }
 
-        log.info("Step 4");
-
         Tag tag = giftCertificateTagRepository.saveTag(tagName);
-        log.info("Step 5");
-
         tagSuccesfullySaved = tag != null;
         if (!tagSuccesfullySaved) {
-            log.info("Step 6");
-
             return ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));
         }
 
         Tag tagResponse = giftCertificateTagRepository.getTagById(tag.getId());
-        log.info("Step 7");
 
         tagSuccesfullySaved = tagResponse != null;
-        log.info("Step 8");
-
         return tagSuccesfullySaved ?
                 ResponseEntity.status(CREATED).body(tagResponse) :
                 ResponseEntity.status(BAD_REQUEST).body(new ErrorDTO(TAG_COULD_NOT_BE_SAVED, TAG_BAD_REQUEST));

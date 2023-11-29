@@ -15,16 +15,16 @@ public interface GiftCertificateTagRepository {
     GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList);
 
     //GET
-    GiftCertificate getGiftCertificateById(long id);
+    GiftCertificate getGiftCertificateById(long certificate_id);
     GiftCertificate getGiftCertificateByName(String giftCertificateName);
     List<GiftCertificate> getCertificatesByTagName(String tagName);
     List<GiftCertificate> searchCertificatesByKeyword(String keyWord);
 
     //DELETE
-    boolean deleteGiftCertificate(long id);
+    boolean deleteGiftCertificate(long certificate_id);
 
     //UPDATE
-    GiftCertificate updateGiftCertificate(long id, GiftCertificate giftCertificate, List<Long> tagIds);
+    GiftCertificate updateGiftCertificate(long certificate_id, GiftCertificate giftCertificate, List<Long> tagIds);
 
     /**
      TAGS
@@ -33,7 +33,7 @@ public interface GiftCertificateTagRepository {
     //SAVE
     Tag saveTag(String tagName);
     //GET
-    Tag getTagById(long id);
+    Tag getTagById(long tag_id);
     Tag getTagByName(String name);
     List<Tag> getTagsListByCertificateId(long certificate_id);
     List<Long> tagIdListByCertificateId(long certificate_id);
@@ -41,7 +41,7 @@ public interface GiftCertificateTagRepository {
     List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder);
 
     //DELETE
-    boolean deleteTag(long id);
+    boolean deleteTag(long tag_id);
     boolean filterValidTags(List<Long> tagIds);
 
     void joinTags(Long giftCertificateId, List<Long> tagIds);
