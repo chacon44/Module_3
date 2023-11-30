@@ -3,14 +3,14 @@ package com.epam.esm.queries;
 public class PostgreSqlQueries {
 
     //CERTIFICATES
-    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?)";
+    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration) VALUES (?, ?, ?, ?)";
 
     public static final String GET_GIFT_CERTIFICATE_BY_NAME = "SELECT * FROM certificates WHERE certificate_name = ?";
     public static final String GET_GIFT_CERTIFICATE_BY_SEARCH_WORD = "SELECT * FROM certificates WHERE certificate_name LIKE ? OR description LIKE ?";
 
     public static final String GET_GIFT_CERTIFICATE_BY_ID = "SELECT * FROM certificates WHERE certificate_id = ?";
 
-    public static final String UPDATE_GIFT_CERTIFICATE = "UPDATE certificates SET certificate_name = COALESCE(?, certificate_name), description = COALESCE(?, description), price = COALESCE(?, price), duration = COALESCE(?, duration), last_update_date = COALESCE(?, last_update_date) WHERE certificate_id = ?";
+    public static final String UPDATE_GIFT_CERTIFICATE = "UPDATE certificates SET certificate_name = COALESCE(?, certificate_name), description = COALESCE(?, description), price = COALESCE(?, price), duration = COALESCE(?, duration), last_update_date = TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') WHERE certificate_id = ?";
 
     public static final String DELETE_GIFT_CERTIFICATE_BY_ID = "DELETE FROM certificates WHERE certificate_id = ?";
 

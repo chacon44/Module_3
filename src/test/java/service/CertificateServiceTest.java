@@ -1,6 +1,7 @@
 package service;
 
 //import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
+
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.GiftCertificateTagRepository;
@@ -52,8 +53,6 @@ public class CertificateServiceTest {
         response.setDescription("description 1");
         response.setPrice(310.00);
         response.setDuration(20L);
-        response.setCreateDate("2023-11-21T16:48:04:309Z");
-        response.setLastUpdateDate("2023-12-25T16:48:04:309Z");
         response.setTags(asList(tag1, tag5));
     }
 

@@ -14,10 +14,9 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.epam.esm.enums.Columns.*;
 import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.BooleanFlags.*;
 import static com.epam.esm.logs.LogMessages.*;
@@ -43,12 +42,6 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         this.certificateRowMapper = certificateRowMapper;
     }
 
-    private final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSS'Z'");
-
-    {
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-    }
-
     /**
      * CERTIFICATE
      */
@@ -60,7 +53,6 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         if (certificateNameExists)
             return null;
 
-        Date date = new Date();
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(
                 connection -> {
@@ -69,17 +61,16 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                     ps.setString(1, giftCertificate.getName());
                     ps.setString(2, giftCertificate.getDescription());
                     ps.setDouble(3, giftCertificate.getPrice());
-                    ps.setLong(4, giftCertificate.getDuration());
-                    ps.setString(5, df.format(date));
-                    ps.setString(6, df.format(date));
+                    ps.setLong(  4, giftCertificate.getDuration());
 
                     return ps;
                 }, keyHolder);
 
         Map<String, Object> keys = keyHolder.getKeys();
         if (keys != null) {
+
             // Get the generated certificate ID and return a new Tag object
-            Long id = ((Number) keys.get("certificate_id")).longValue();
+            Long id = ((Number) keys.get(GIFT_CERTIFICATE_ID.getColumn())).longValue();
             giftCertificate.setId(id);
             joinTags(id, tagList);
             return giftCertificate;
@@ -231,7 +222,6 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                 giftCertificate.getDescription(),
                 giftCertificate.getPrice(),
                 giftCertificate.getDuration(),
-                df.format(new Date()),
                 id);
 
         return getGiftCertificateById(id);
@@ -292,7 +282,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
 
             Map<String, Object> keys = keyHolder.getKeys();
             if (keys != null) {
-                Long id = ((Number) keys.get("tag_id")).longValue();
+                Long id = ((Number) keys.get(TAG_TABLE_ID.getColumn())).longValue();
                 return new Tag(id, tagName);
             }
         }
@@ -315,11 +305,6 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
 
         log.info("Joining tags to gift certificate with id {}", giftCertificateId);
 
-        if (tagIds.isEmpty())
-            throw new RuntimeException("Tag list is empty");
-
-
-        log.info("There are tags attached, delete from joint table");
         jdbcTemplate.update(DELETE_CERTIFICATE_FROM_JOINT_TABLE, giftCertificateId);
         tagIds.forEach(tagId -> {
             Tag tag = getTagById(tagId);
@@ -328,10 +313,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
             }
             //TODO create method for this
             jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, giftCertificateId, tagId);
-            )
         });
-
-
     }
 
     @Override

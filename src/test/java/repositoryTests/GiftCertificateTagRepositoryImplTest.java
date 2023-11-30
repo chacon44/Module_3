@@ -427,19 +427,6 @@ class GiftCertificateTagRepositoryImplTest {
     }
 
     @Test
-    void joinTags_emptyTagList() {
-
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                giftCertificateTagRepository
-                        .joinTags(giftCertificate1.getId(), List.of()));
-
-        String expectedMessage = "Tag list is empty";
-        String actualMessage = exception.getMessage();
-
-        assertTrue(actualMessage.contains(expectedMessage));
-    }
-
-    @Test
     void joinTags_nonExistingCertificate() {
 
         Exception exception = assertThrows(RuntimeException.class, () ->

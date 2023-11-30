@@ -45,7 +45,6 @@ public class DatabaseConfiguration {
         databasePopulator.execute(dataSource);
         log.debug(CREATING_DATABASE);
 
-
         return dataSource;
     }
 
