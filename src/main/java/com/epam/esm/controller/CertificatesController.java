@@ -30,7 +30,7 @@ public class CertificatesController {
         return giftCertificateService.getGiftCertificateById(id);
     }
 
-    @GetMapping(value = "/certificate/filter", produces = {"application/json"})
+    @GetMapping(value = "/certificate/", produces = {"application/json"})
     public ResponseEntity<?> getFilteredCertificates(
             @RequestParam(required = false) String tagName,
             @RequestParam(required = false) String searchWord,

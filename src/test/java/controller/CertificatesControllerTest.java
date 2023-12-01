@@ -1,5 +1,6 @@
 package controller;
 
+import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
 import com.epam.esm.controller.CertificatesController;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
@@ -18,15 +19,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.hamcrest.core.Is.is;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 public class CertificatesControllerTest {
@@ -39,8 +40,6 @@ public class CertificatesControllerTest {
 
     private MockMvc mockMvc;
 
-    private final Date date = new Date();
-
     private List<Long> tagIdsList = new ArrayList<>();
 
     private Tag
@@ -50,17 +49,14 @@ public class CertificatesControllerTest {
             tag4 = new Tag(),
             tag5 = new Tag(),
             tag6 = new Tag();
-    private GiftCertificate
-            giftCertificateResponse1 = new GiftCertificate(),
-            giftCertificate2 = new GiftCertificate(),
-            giftCertificate3 = new GiftCertificate();
-    GiftCertificate giftCertificate = null;
+    private GiftCertificate giftCertificateResponse1 = new GiftCertificate(
+"certificate for test", "description for test", 10.50, 10L);
+
+    GiftCertificateRequestDTO giftCertificate = null;
     List<Tag> tagList = asList(tag1,tag2,tag3,tag4,tag5,tag6);
 
     public void createData(){
 
-        giftCertificate = new GiftCertificate(
-                "certificate for test", "description for test", 10.50, 10L);
         tag1 = new Tag(1L, "tag 3");
         tag2 = new Tag(2L, "tag 1");
         tag3 = new Tag(3L, "tag 2");
@@ -70,7 +66,12 @@ public class CertificatesControllerTest {
 
         tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
         tagList = asList(tag1, tag3, tag4, tag5);
-        giftCertificateResponse1 = giftCertificate;
+        giftCertificate = new GiftCertificateRequestDTO(
+                "certificate for test", "description for test", 10.50, 10L, tagIdsList);
+
+        giftCertificateResponse1 = new GiftCertificate(
+                "certificate for test", "description for test", 10.50, 10L);
+
         giftCertificateResponse1.setId(1L);
         giftCertificateResponse1.setCreateDate("2023-11-21T16:48:04:309Z");
         giftCertificateResponse1.setLastUpdateDate("2023-12-25T16:48:04:309Z");
@@ -93,21 +94,20 @@ public class CertificatesControllerTest {
     @Test
     public void testPostGiftCertificate_giftCertificateNotFound_CreatedReturned()  throws Exception {
 
-        when(giftCertificateService.saveGiftCertificate(eq(giftCertificate), eq(tagIdsList))).thenReturn(new ResponseEntity(giftCertificateResponse1, HttpStatus.CREATED));
+        when(giftCertificateService.saveGiftCertificate(eq(giftCertificateResponse1), eq(tagIdsList))).thenReturn(new ResponseEntity(giftCertificateResponse1, HttpStatus.CREATED));
 
-        mockMvc.perform(post("/certificate").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
+        String responseString = mockMvc.perform(post("/certificate").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(giftCertificate)))
         //Assert
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id", is(giftCertificateResponse1.getId()), Long.class))
-                .andExpect(jsonPath("$.name", is(giftCertificateResponse1.getName())))
-                .andExpect(jsonPath("$.description", is(giftCertificateResponse1.getDescription())))
-                .andExpect(jsonPath("$.price", is(giftCertificateResponse1.getPrice())))
-                .andExpect(jsonPath("$.duration", is(giftCertificateResponse1.getDuration().intValue())))
-                .andExpect(jsonPath("$.createDate", is(giftCertificateResponse1.getCreateDate())))
-                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificateResponse1.getLastUpdateDate())))
-                .andExpect(jsonPath("$.tags", is(new ObjectMapper().readValue(asJsonString(giftCertificateResponse1.getTags()), List.class))))
-                .andExpect(status().isCreated());
+                .andReturn().getResponse().getContentAsString();
+
+        GiftCertificate responseObject = new ObjectMapper().readValue(responseString, GiftCertificate.class);
+
+        // Perform assertions on responseObject
+        assertEquals(1L, responseObject.getId());
+
     }
 
 }

@@ -18,7 +18,6 @@ import java.util.*;
 
 import static com.epam.esm.enums.Columns.*;
 import static com.epam.esm.exceptions.Messages.*;
-import static com.epam.esm.logs.BooleanFlags.*;
 import static com.epam.esm.logs.LogMessages.*;
 import static com.epam.esm.queries.PostgreSqlQueries.*;
 import static java.sql.Statement.*;
@@ -49,7 +48,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     public GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList) {
         log.info(SAVING_GIFT_CERTIFICATE);
 
-        certificateNameExists = getGiftCertificateByName(giftCertificate.getName()) != null;
+        boolean certificateNameExists = getGiftCertificateByName(giftCertificate.getName()) != null;
         if (certificateNameExists)
             return null;
 
@@ -120,8 +119,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     public List<GiftCertificate> getCertificatesByTagName(String tagName) {
 
         Tag tag = getTagByName(tagName);
-        tagExists = tag != null;
-        if (tagExists) {
+        if (tag != null) {
             log.info(TAG_FOUND.formatted(tagName, tag.getId()));
 
             List<Long> giftCertificates = jdbcTemplate.query(GET_CERTIFICATES_BY_TAG_ID, certificateRowMapperForIds, tag.getId());
@@ -210,7 +208,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     public GiftCertificate updateGiftCertificate(long id, GiftCertificate giftCertificate, List<Long> tagIds) {
         log.info(UPDATING_GIFT_CERTIFICATE, id);
 
-        thereAreNonExistingTags = !filterValidTags(tagIds);
+        boolean thereAreNonExistingTags = !filterValidTags(tagIds);
         boolean certificateDoesNotExist = getGiftCertificateById(id) == null;
         if (thereAreNonExistingTags || certificateDoesNotExist) {
             return null;

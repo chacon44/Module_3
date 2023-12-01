@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 
 import static com.epam.esm.exceptions.Codes.*;
 import static com.epam.esm.exceptions.Messages.*;
-import static com.epam.esm.logs.BooleanFlags.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
@@ -42,8 +41,7 @@ public class GiftCertificateService {
         GiftCertificate saveGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, tagIdsList);
 
         if (tryToFindCertificate == null) {
-            certificateSuccesfullySaved = saveGiftCertificate != null;
-            if (certificateSuccesfullySaved) {
+            if (saveGiftCertificate != null) {
                 GiftCertificate response = giftCertificateTagRepository.getGiftCertificateByName(giftCertificate.getName());
                 return new ResponseEntity<>(response, HttpStatus.CREATED);
 
@@ -63,8 +61,7 @@ public class GiftCertificateService {
 
         GiftCertificate giftCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 
-        certificateExists = giftCertificate != null;
-        if (certificateExists) {
+        if (giftCertificate != null) {
             return ResponseEntity.ok(giftCertificate);
         } else {
             String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
@@ -83,7 +80,8 @@ public class GiftCertificateService {
     }
 
     public ResponseEntity<?> deleteGiftCertificateById(Long giftCertificateId) {
-        certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificate(giftCertificateId);
+
+        boolean certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificate(giftCertificateId);
 
         return certificateSuccessfullyDeleted ?
                 ResponseEntity.status(HttpStatus.FOUND).body(null) :
@@ -92,7 +90,6 @@ public class GiftCertificateService {
                                 CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId),
                                 Codes.CERTIFICATE_NOT_FOUND));
     }
-
     public ResponseEntity<?> updateGiftCertificate(Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
         ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate);
         if (requestValidationMessage != null) {
@@ -126,11 +123,10 @@ public class GiftCertificateService {
     }
 
     private ResponseEntity<ErrorDTO> validateCertificateRequest(GiftCertificate giftCertificate) {
-        String validationMessage = CertificateValidator.validateRequest(giftCertificate);
+        Optional<String> validationMessage = CertificateValidator.validateRequest(giftCertificate);
 
-        certificateRequestIsValid = validationMessage.equals("Valid");
-        if (!certificateRequestIsValid) {
-            ErrorDTO errorResponse = new ErrorDTO(validationMessage, CERTIFICATE_BAD_REQUEST);
+        if (validationMessage.isPresent()) {
+            ErrorDTO errorResponse = new ErrorDTO(validationMessage.get(), CERTIFICATE_BAD_REQUEST);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
         }
         return null;
