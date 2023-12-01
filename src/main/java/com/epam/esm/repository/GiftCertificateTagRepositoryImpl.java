@@ -1,9 +1,8 @@
 package com.epam.esm.repository;
 
+import com.epam.esm.enums.Columns;
 import com.epam.esm.mapper.GiftCertificateRowMapper;
-import com.epam.esm.mapper.GiftCertificateRowMapperForIds;
 import com.epam.esm.mapper.TagRowMapper;
-import com.epam.esm.mapper.TagRowMapperForIds;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +30,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
 
     private final JdbcTemplate jdbcTemplate;
     private final TagRowMapper tagRowMapper;
-    private final TagRowMapperForIds tagRowMapperForIds = new TagRowMapperForIds();
     private final GiftCertificateRowMapper certificateRowMapper;
-    private final GiftCertificateRowMapperForIds certificateRowMapperForIds = new GiftCertificateRowMapperForIds();
 
     public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
@@ -122,7 +119,10 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         if (tag != null) {
             log.info(TAG_FOUND.formatted(tagName, tag.getId()));
 
-            List<Long> giftCertificates = jdbcTemplate.query(GET_CERTIFICATES_BY_TAG_ID, certificateRowMapperForIds, tag.getId());
+            List<Long> giftCertificates = jdbcTemplate.query(
+                    GET_CERTIFICATES_BY_TAG_ID,
+                    (rs, rowNum) -> rs.getLong(GIFT_CERTIFICATE_ID.getColumn()),
+                    tag.getId());
 
             boolean certificatesListIsEmpty = giftCertificates.isEmpty();
 
@@ -244,7 +244,10 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     @Override
     public List<Long> tagIdListByCertificateId(long certificate_id) {
         log.info(GETTING_TAG_IDS_BY_CERTIFICATE_ID, certificate_id);
-        return jdbcTemplate.query(GET_TAGS_BY_CERTIFICATE_ID, tagRowMapperForIds, certificate_id);
+        return jdbcTemplate.query(
+                GET_TAGS_BY_CERTIFICATE_ID,
+                (rs, rowNum) -> rs.getLong(Columns.TAG_TABLE_ID.getColumn()),
+                certificate_id);
     }
 
     @Override
