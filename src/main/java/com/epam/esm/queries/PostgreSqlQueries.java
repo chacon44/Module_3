@@ -3,7 +3,7 @@ package com.epam.esm.queries;
 public class PostgreSqlQueries {
 
     //CERTIFICATES
-    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration) VALUES (?, ?, ?, ?)";
+    public static final String SAVE_GIFT_CERTIFICATE = "INSERT INTO certificates (certificate_name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'), TO_CHAR(CURRENT_TIMESTAMP, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'))";
 
     public static final String GET_GIFT_CERTIFICATE_BY_NAME = "SELECT * FROM certificates WHERE certificate_name = ?";
     public static final String GET_GIFT_CERTIFICATE_BY_SEARCH_WORD = "SELECT * FROM certificates WHERE certificate_name LIKE ? OR description LIKE ?";

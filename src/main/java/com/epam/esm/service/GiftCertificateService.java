@@ -5,6 +5,7 @@ import com.epam.esm.exceptions.Codes;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.repository.GiftCertificateTagRepository;
 import com.epam.esm.validators.CertificateValidator;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,12 +30,30 @@ public class GiftCertificateService {
         this.giftCertificateTagRepository = giftCertificateTagRepository;
     }
 
-    public ResponseEntity<?> saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagIdsList) {
+    /**
+     * The saveGiftCertificate method is used to save a new gift certificate in the database.
+     * This method also validates the request and ensures that each gift certificate is unique.
+     *
+     * @param giftCertificate  The gift certificate object to be saved. It should contain all the required fields.
+     * @param tagIdsList       The list of tag IDs associated with the gift certificate.
+     *
+     * @return
+     *
+     *         If the gift certificate is saved successfully, it returns the saved certificate
+     *         with a HttpStatus of CREATED (201).
+     *
+     *         If the gift certificate could not be saved, it returns
+     *         an ErrorDTO object with a message and a HttpStatus of BAD_REQUEST (400).
+     *
+     *         If a gift certificate with the same name already exists in the database,
+     *         it returns an ErrorDTO object with a message and a HttpStatus of FOUND (302).
+     *
+     */
+    public ResponseEntity<?> saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
 
-        ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate);
-        if (requestValidationMessage != null) return requestValidationMessage;
+        Optional< ResponseEntity<ErrorDTO> > requestValidationMessage = validateCertificateRequest(giftCertificate);
+        if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
 
-        //eliminate duplicated tag ids
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
         GiftCertificate tryToFindCertificate = giftCertificateTagRepository.getGiftCertificateByName(giftCertificate.getName());
 
@@ -57,7 +76,14 @@ public class GiftCertificateService {
         }
     }
 
-    public ResponseEntity getGiftCertificateById(Long giftCertificateId) {
+    /**
+     *
+     * @param giftCertificateId id of the certificate
+     * @return
+     * if certificate exists, returns Response Entity with giftcertificate
+     * if not, returns not found and error
+     */
+    public ResponseEntity getGiftCertificateById(@NonNull Long giftCertificateId) {
 
         GiftCertificate giftCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 
@@ -71,15 +97,38 @@ public class GiftCertificateService {
         }
     }
 
+
+    /**
+     *
+     * @param tagName The name of the tag to filter the gift certificates.
+     * @param searchWord The word to search in the gift certificates.
+     * @param nameOrder The order in which to sort the gift certificates by name.
+     * @param createDateOrder The order in which to sort the gift certificates by creation date.
+     * @return
+     *  can return the list and OK if list is not null, otherwise will return not found with message.
+     */
     public ResponseEntity<?> getFilteredCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder) {
-        //TODO add exceptions here
 
         List<GiftCertificate> list = giftCertificateTagRepository.filterCertificates(tagName, searchWord, nameOrder, createDateOrder);
 
-        return new ResponseEntity<>(list, HttpStatus.OK);
+        if (list != null) {
+            return new ResponseEntity<>(list, HttpStatus.OK);
+        } else {
+            String message = "Problem with list";
+
+            ErrorDTO errorResponse = new ErrorDTO(message, 1000);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        }
     }
 
-    public ResponseEntity<?> deleteGiftCertificateById(Long giftCertificateId) {
+    /**
+     *
+     * @param giftCertificateId id of certificate to be deleted
+     * @return
+     * if deleted, returns FOUND
+     * if not deleted, returns NO CONTENT, with body containing message and code
+     */
+    public ResponseEntity<?> deleteGiftCertificate(Long giftCertificateId) {
 
         boolean certificateSuccessfullyDeleted = giftCertificateTagRepository.deleteGiftCertificate(giftCertificateId);
 
@@ -90,11 +139,26 @@ public class GiftCertificateService {
                                 CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId),
                                 Codes.CERTIFICATE_NOT_FOUND));
     }
-    public ResponseEntity<?> updateGiftCertificate(Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
-        ResponseEntity<ErrorDTO> requestValidationMessage = validateCertificateRequest(giftCertificate);
-        if (requestValidationMessage != null) {
-            return requestValidationMessage;
-        }
+
+    /**
+     *
+     * @param id cannot be null
+     * @param giftCertificate cannot be empty
+     *                        can contain not valid parameters
+     *
+     *                        new values of certificate to be assigned to the id
+     * @param tagIdsList can be empty
+     * @return
+     * Updated correctly: ResponseEntity.status(HttpStatus.OK).body(responseDTO)
+     * Parameters not valid: requestValidationMessage.get() when parameters not valid
+     * Already existing identical certificate: ResponseEntity.status(HttpStatus.FOUND).body(errorResponse)
+     * Id not associated to any certificate: ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse)
+     * Some of tags doesn't exists: ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse)
+     */
+    public ResponseEntity<?> updateGiftCertificate(@NonNull Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
+
+        Optional< ResponseEntity<ErrorDTO> > requestValidationMessage = validateCertificateRequest(giftCertificate);
+        if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
 
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
 
@@ -122,17 +186,18 @@ public class GiftCertificateService {
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
-    private ResponseEntity<ErrorDTO> validateCertificateRequest(GiftCertificate giftCertificate) {
+    private Optional< ResponseEntity<ErrorDTO> >validateCertificateRequest(GiftCertificate giftCertificate) {
         Optional<String> validationMessage = CertificateValidator.validateRequest(giftCertificate);
 
         if (validationMessage.isPresent()) {
             ErrorDTO errorResponse = new ErrorDTO(validationMessage.get(), CERTIFICATE_BAD_REQUEST);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+            return Optional.of(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
         }
-        return null;
+        return Optional.empty();
     }
 
     private boolean validateUpdate(Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
+
 
         GiftCertificate certificate = giftCertificateTagRepository.getGiftCertificateById(id);
 

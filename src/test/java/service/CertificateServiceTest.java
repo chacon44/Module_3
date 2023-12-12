@@ -1,7 +1,5 @@
 package service;
 
-//import com.epam.esm.Dto.GiftCertificate.GiftCertificateRequestDTO;
-
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
 import com.epam.esm.repository.GiftCertificateTagRepository;
@@ -12,10 +10,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -24,6 +25,11 @@ public class CertificateServiceTest {
     @Mock
     GiftCertificateTagRepository giftCertificateTagRepository;
 
+    @Mock
+    GiftCertificate giftCertificate;
+
+    @Mock
+    List <Long> tagList;
 
     private GiftCertificate
             response = new GiftCertificate(),
@@ -57,33 +63,51 @@ public class CertificateServiceTest {
     }
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         giftCertificateService = new GiftCertificateService(giftCertificateTagRepository);
         createData();
-
     }
 
     @Test
-    public void saveAndGetSaved(){
+    public void saveGiftCertificate_correctlySaved() {
 
         List<Long> tagIdsList = List.of(1L, 3L, 4L, 5L);
+
+        GiftCertificate newRequest = request;
+        newRequest.setName("new name");
+
+        ResponseEntity<?> response = new ResponseEntity<>(newRequest, HttpStatus.CREATED);
         //ACT
-        giftCertificateService.saveGiftCertificate(request, tagIdsList);
-        giftCertificateService.getGiftCertificateById(1L);
+        giftCertificateService.saveGiftCertificate(newRequest, tagIdsList);
+        //giftCertificateService.getGiftCertificateById(1L);
+
+        ResponseEntity actual = giftCertificateService.saveGiftCertificate(newRequest, tagIdsList);
+        assertEquals(response, actual);
 
         Mockito.verify(giftCertificateTagRepository, Mockito.times(1))
                 .saveGiftCertificate(
-                        Mockito.eq(request),
-                        Mockito.eq(tagIdsList));
+                        Mockito.eq(newRequest),
+                        Mockito.eq(tagIdsList)
+                );
 
         Mockito.verify(giftCertificateTagRepository, Mockito.times(1))
                 .getGiftCertificateByName(
-                        Mockito.eq(request.getName()));
+                        Mockito.eq(newRequest.getName()));
     }
 
     @Test
-    public void getNonSavedCertificate() {
-        giftCertificateService.getGiftCertificateById(1000L);
-        Mockito.verify(giftCertificateTagRepository).getGiftCertificateById(1000L);
+    public void getCertificate() {
+
+
+        ResponseEntity<?> expected = ResponseEntity.ok(response);
+        //ACT
+        List<Long> tagIdsList = List.of(1L, 3L, 4L, 5L);
+        request = new GiftCertificate(
+                "certificate for test", "description for test", 10.50, 10L);
+
+        giftCertificateService.saveGiftCertificate(request, tagIdsList);
+        ResponseEntity actual = giftCertificateService.getGiftCertificateById(response.getId());
+        assertEquals(expected, actual);
+
     }
 }

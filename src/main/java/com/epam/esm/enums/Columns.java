@@ -18,10 +18,13 @@ public enum Columns {
     TAG_TABLE_ID("tag_id"),
     TAG_TABLE_NAME("tag_name");
 
-
     private final String column;
     Columns(String column) {
         this.column = column;
     }
 
+    @Override
+    public String toString() {
+        return this.getColumn();
+    }
 }

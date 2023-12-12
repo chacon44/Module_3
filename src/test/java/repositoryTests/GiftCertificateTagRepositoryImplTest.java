@@ -36,18 +36,12 @@ class GiftCertificateTagRepositoryImplTest {
     private final Long nonExistingId = 1000L;
     private final String nonExistingName = "xDfi4vc#sl";
 
-    private Tag
-            tag1 = new Tag(),
-            tag2 = new Tag(),
-            tag3 = new Tag(),
-            tag4 = new Tag(),
-            tag5 = new Tag(),
-            tag6 = new Tag();
-    private GiftCertificate
-            giftCertificate1 = new GiftCertificate(),
-            giftCertificate2 = new GiftCertificate(),
-            giftCertificate3 = new GiftCertificate();
-    private final List<GiftCertificate> giftCertificateList = List.of(giftCertificate1, giftCertificate2, giftCertificate3);
+    Tag tag1 = new Tag();
+    Tag tag5 = new Tag();
+    private GiftCertificate giftCertificate1 = new GiftCertificate();
+    private GiftCertificate giftCertificate2 = new GiftCertificate();
+    private GiftCertificate giftCertificate3 = new GiftCertificate();
+    private List<GiftCertificate> giftCertificateList = List.of(giftCertificate1, giftCertificate2, giftCertificate3);
 
     @BeforeEach
     void setUp() {
@@ -56,11 +50,11 @@ class GiftCertificateTagRepositoryImplTest {
                 "certificate for test", "description for test", 10.50, 10L);
 
         tag1 = new Tag(1L, "tag 3");
-        tag2 = new Tag(2L, "tag 1");
-        tag3 = new Tag(3L, "tag 2");
-        tag4 = new Tag(4L, "blue");
+        Tag tag2 = new Tag(2L, "tag 1");
+        Tag tag3 = new Tag(3L, "tag 2");
+        Tag tag4 = new Tag(4L, "blue");
         tag5 = new Tag(5L, "colour");
-        tag6 = new Tag(6L, "animal 1");
+        Tag tag6 = new Tag(6L, "animal 1");
 
         tagIdsList = new ArrayList<>(List.of(1L, 3L, 4L, 5L));
 
@@ -115,12 +109,11 @@ class GiftCertificateTagRepositoryImplTest {
 
     @Test
     void getGiftCertificateById_existingId() {
-        GiftCertificate expected = giftCertificate1;
 
         GiftCertificate actual = giftCertificateTagRepository.getGiftCertificateById(1L);
 
         assertNotNull(actual);
-        assertEquals(expected, actual);
+        assertEquals(giftCertificate1, actual);
     }
 
     @Test
@@ -132,12 +125,11 @@ class GiftCertificateTagRepositoryImplTest {
 
     @Test
     void getGiftCertificateByName_existingName() {
-        GiftCertificate expected = giftCertificate1;
 
         GiftCertificate actual = giftCertificateTagRepository.getGiftCertificateByName("certificate");
 
         assertNotNull(actual);
-        assertEquals(expected, actual);
+        assertEquals(giftCertificate1, actual);
     }
 
     @Test
@@ -272,11 +264,13 @@ class GiftCertificateTagRepositoryImplTest {
 
     @Test
     void deleteCertificate_existingCertificate() {
+
         assertTrue(giftCertificateTagRepository.deleteGiftCertificate(giftCertificate1.getId()));
     }
 
     @Test
     void deleteCertificate_nonExistingCertificate() {
+
         assertFalse(giftCertificateTagRepository.deleteGiftCertificate(nonExistingId));
     }
 
@@ -296,6 +290,7 @@ class GiftCertificateTagRepositoryImplTest {
     //TAGS
     @Test
     void getTagById_getExistingTag() {
+
         Tag tag = giftCertificateTagRepository.getTagById(tag5.getId());
         assertNotNull(tag);
     }
@@ -376,14 +371,6 @@ class GiftCertificateTagRepositoryImplTest {
     }
 
     @Test
-    void saveTag_notValidRequest() {
-
-        Tag tag = giftCertificateTagRepository.saveTag("");
-
-        assertNull(tag);
-    }
-
-    @Test
     void deleteTag_existingTag() {
 
         assertTrue(giftCertificateTagRepository.deleteTag(tag1.getId()));
@@ -424,30 +411,5 @@ class GiftCertificateTagRepositoryImplTest {
         String actualMessage = exception.getMessage();
 
         assertTrue(actualMessage.contains(expectedMessage));
-    }
-
-    @Test
-    void joinTags_nonExistingCertificate() {
-
-        Exception exception = assertThrows(RuntimeException.class, () ->
-                giftCertificateTagRepository
-                        .joinTags(null, tagIdsList));
-
-        String expectedMessage = "Certificate is null";
-        String actualMessage = exception.getMessage();
-
-        assertTrue(actualMessage.contains(expectedMessage));
-    }
-
-    @Test
-    void filterValidTags_existingTags() {
-        assertTrue(giftCertificateTagRepository.filterValidTags(tagIdsList));
-    }
-
-    @Test
-    void filterValidTags_nonExistingTags() {
-        tagIdsList.add(nonExistingId);
-
-        assertFalse(giftCertificateTagRepository.filterValidTags(tagIdsList));
     }
 }

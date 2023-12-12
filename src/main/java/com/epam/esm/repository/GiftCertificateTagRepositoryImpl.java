@@ -5,6 +5,7 @@ import com.epam.esm.mapper.GiftCertificateRowMapper;
 import com.epam.esm.mapper.TagRowMapper;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -20,7 +21,6 @@ import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.LogMessages.*;
 import static com.epam.esm.queries.PostgreSqlQueries.*;
 import static java.sql.Statement.*;
-import static java.util.Collections.*;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.*;
 
@@ -39,7 +39,10 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     }
 
     /**
-     * CERTIFICATE
+     * @param giftCertificate cannot be null or empty
+     * @param tagList         can be empty
+     * @return null if certificate name already exist
+     * certificate if it does not exist
      */
     @Override
     public GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList) {
@@ -57,61 +60,66 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                     ps.setString(1, giftCertificate.getName());
                     ps.setString(2, giftCertificate.getDescription());
                     ps.setDouble(3, giftCertificate.getPrice());
-                    ps.setLong(  4, giftCertificate.getDuration());
+                    ps.setLong(4, giftCertificate.getDuration());
 
                     return ps;
                 }, keyHolder);
 
         Map<String, Object> keys = keyHolder.getKeys();
-        if (keys != null) {
 
-            // Get the generated certificate ID and return a new Tag object
-            Long id = ((Number) keys.get(GIFT_CERTIFICATE_ID.getColumn())).longValue();
-            giftCertificate.setId(id);
-            joinTags(id, tagList);
-            return giftCertificate;
-        }
-        return null;
+        // Get the generated certificate ID and return a new Tag object
+        Long id = ((Number) Objects.requireNonNull(keys).get(GIFT_CERTIFICATE_ID.getColumn())).longValue();
+        giftCertificate.setId(id);
+        joinTags(id, tagList);
+        return giftCertificate;
     }
 
+    /**
+     * @param giftCertificateId cannot be empty or null
+     * @return certificate if id exists
+     * null if not
+     */
     @Override
-    public GiftCertificate getGiftCertificateById(long giftCertificateId) {
+    public GiftCertificate getGiftCertificateById(@NonNull Long giftCertificateId) {
         log.info(GETTING_GIFT_CERTIFICATES_BY_ID, giftCertificateId);
 
         try {
             GiftCertificate giftCertificate = jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_ID, certificateRowMapper, giftCertificateId);
 
-            if (giftCertificate == null)
-                return null;
-            else {
-                List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificateId);
-                giftCertificate.setTags(tagsToAdd);
-                return giftCertificate;
-            }
+            List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificateId);
+            Objects.requireNonNull(giftCertificate).setTags(tagsToAdd);
+            return giftCertificate;
         } catch (EmptyResultDataAccessException e) {
             log.warn(CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId));
             return null;
         }
     }
 
+    /**
+     * @param giftCertificateName unique name associated to certificate
+     * @return certificate if name exists
+     * null if not
+     */
     @Override
     public GiftCertificate getGiftCertificateByName(String giftCertificateName) {
         log.info(GETTING_GIFT_CERTIFICATE_BY_NAME, giftCertificateName);
         try {
             GiftCertificate giftCertificate = jdbcTemplate.queryForObject(GET_GIFT_CERTIFICATE_BY_NAME, certificateRowMapper, giftCertificateName);
-            if (giftCertificate == null)
-                return null;
-            else {
-                List<Tag> tagsToAdd = getTagsListByCertificateId(giftCertificate.getId());
-                giftCertificate.setTags(tagsToAdd);
-                return giftCertificate;
-            }
+            List<Tag> tagsToAdd = getTagsListByCertificateId(Objects.requireNonNull(giftCertificate).getId());
+            giftCertificate.setTags(tagsToAdd);
+
+            return giftCertificate;
         } catch (EmptyResultDataAccessException e) {
             log.warn(CERTIFICATE_WITH_NAME_NOT_FOUND.formatted(giftCertificateName));
             return null;
         }
     }
 
+    /**
+     * @param tagName unique name associated to tag
+     * @return tag if name exists
+     * empty list if not
+     */
     @Override
     public List<GiftCertificate> getCertificatesByTagName(String tagName) {
 
@@ -124,17 +132,19 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                     (rs, rowNum) -> rs.getLong(GIFT_CERTIFICATE_ID.getColumn()),
                     tag.getId());
 
-            boolean certificatesListIsEmpty = giftCertificates.isEmpty();
-
-            return certificatesListIsEmpty ? List.of() : giftCertificates.stream().map(this::getGiftCertificateById).collect(toList());
-        } else return List.of();
+            return giftCertificates.stream().map(this::getGiftCertificateById).collect(toList());
+        }
+        return List.of();
     }
 
+    /**
+     *
+     * @param keyword word to search in name or description
+     * @return
+     * list of certificates, can be empty
+     */
     @Override
     public List<GiftCertificate> searchCertificatesByKeyword(String keyword) {
-        if (keyword == null || keyword.isEmpty()) {
-            throw new IllegalArgumentException("Keyword cannot be null or empty");
-        }
 
         String searchTerm = "%" + keyword + "%";
 
@@ -142,10 +152,16 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                 GET_GIFT_CERTIFICATE_BY_SEARCH_WORD,
                 certificateRowMapper, searchTerm, searchTerm);
 
-        return giftCertificates.isEmpty() ? emptyList() :
-                giftCertificates.stream().map(giftCertificate -> getGiftCertificateById(giftCertificate.getId())).collect(toList());
+        return giftCertificates.stream().map(giftCertificate -> getGiftCertificateById(giftCertificate.getId())).collect(toList());
     }
 
+    /**
+     *
+     * @param commonList list obtained after filtering by keyword and tag name
+     * @param nameOrder order by name
+     * @param createDateOrder order by creation date
+     * @return list of certificates
+     */
     @Override
     public List<GiftCertificate> sortCertificates(List<GiftCertificate> commonList, String nameOrder, String createDateOrder) {
 
@@ -181,21 +197,35 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         return commonList;
     }
 
+    /**
+     *
+     * @param tagName unique name associated to tag
+     * @param searchWord word that has to be searched in name or description
+     * @param nameOrder order by name
+     * @param createDateOrder order by creation date
+     * @return list of certificates
+     */
     @Override
     public List<GiftCertificate> filterCertificates(String tagName, String searchWord, String nameOrder, String createDateOrder) {
 
         List<GiftCertificate> commonList = new ArrayList<>();
-        if (tagName != null) {
+        if (tagName != null && !tagName.isEmpty()) {
             commonList.addAll(getCertificatesByTagName(tagName));
-            if (searchWord != null)
+            if (searchWord != null && !searchWord.isEmpty())
                 commonList.retainAll(searchCertificatesByKeyword(searchWord));
-        } else if (searchWord != null) {
+        } else if (searchWord != null && !searchWord.isEmpty()) {
             commonList.addAll(searchCertificatesByKeyword(searchWord));
         }
 
         return sortCertificates(commonList, nameOrder, createDateOrder);
     }
 
+    /**
+     *
+     * @param giftCertificateId unique id associated to certificate
+     * @return
+     * true if certificate was deleted, false if not
+     */
     @Override
     public boolean deleteGiftCertificate(long giftCertificateId) {
         log.info(DELETING_GIFT_CERTIFICATE_BY_ID, giftCertificateId);
@@ -204,32 +234,42 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         return jdbcTemplate.update(DELETE_GIFT_CERTIFICATE_BY_ID, giftCertificateId) > 0;
     }
 
+    /**
+     * @param certificate_id unique id associated to certificate
+     * @param giftCertificate certificate containing new data to be updated
+     * @param tagIds list of unique ids associated to tags
+     * @return
+     * null if some of the tags does not exist, or certificate does not exist
+     * updated certificate if it is updated
+     */
     @Override
-    public GiftCertificate updateGiftCertificate(long id, GiftCertificate giftCertificate, List<Long> tagIds) {
-        log.info(UPDATING_GIFT_CERTIFICATE, id);
+    public GiftCertificate updateGiftCertificate(long certificate_id, GiftCertificate giftCertificate, List<Long> tagIds) {
+        log.info(UPDATING_GIFT_CERTIFICATE, certificate_id);
 
         boolean thereAreNonExistingTags = !filterValidTags(tagIds);
-        boolean certificateDoesNotExist = getGiftCertificateById(id) == null;
+        boolean certificateDoesNotExist = getGiftCertificateById(certificate_id) == null;
         if (thereAreNonExistingTags || certificateDoesNotExist) {
             return null;
         }
 
-        joinTags(id, tagIds);
+        joinTags(certificate_id, tagIds);
         jdbcTemplate.update(UPDATE_GIFT_CERTIFICATE,
                 giftCertificate.getName(),
                 giftCertificate.getDescription(),
                 giftCertificate.getPrice(),
                 giftCertificate.getDuration(),
-                id);
+                certificate_id);
 
-        return getGiftCertificateById(id);
+        return getGiftCertificateById(certificate_id);
     }
 
-
     /**
-     * TAG
+     *
+     * @param tagId unique id associated to tag
+     * @return
+     * Tag if it exists
+     * null if not
      */
-
     @Override
     public Tag getTagById(long tagId) {
         log.info(GETTING_TAG_BY_ID, tagId);
@@ -241,6 +281,12 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         }
     }
 
+    /**
+     * @param certificate_id unique id associated to certificate
+     * @return
+     * tag ids list associated to certificate id. Can be empty
+     *
+     */
     @Override
     public List<Long> tagIdListByCertificateId(long certificate_id) {
         log.info(GETTING_TAG_IDS_BY_CERTIFICATE_ID, certificate_id);
@@ -250,6 +296,10 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                 certificate_id);
     }
 
+    /**
+     * @param certificate_id unique id associated to certificate
+     * @return tags list associated to certificate id. Can be empty
+     */
     @Override
     public List<Tag> getTagsListByCertificateId(long certificate_id) {
         return tagIdListByCertificateId(certificate_id).stream()
@@ -259,6 +309,13 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
                 .collect(toList());
     }
 
+    /**
+     *
+     * @param tagName unique name associated to tag
+     * @return
+     * tag if name exists
+     * null if not
+     */
     @Override
     public Tag getTagByName(String tagName) {
         log.info(GETTING_TAG_BY_NAME, tagName);
@@ -270,11 +327,18 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         }
     }
 
+    /**
+     *
+     * @param tagName unique name associated to tag
+     * @return
+     * tag if name does not exists
+     * null if it already exist
+     */
     @Override
-    public Tag saveTag(String tagName) {
-        if (!tagName.isEmpty() && getTagByName(tagName) == null) {
-            KeyHolder keyHolder = new GeneratedKeyHolder();
+    public Tag saveTag(@NonNull String tagName) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
 
+        if(getTagByName(tagName) == null) {
             jdbcTemplate.update(connection -> {
                 PreparedStatement ps = connection.prepareStatement(SAVE_TAG, RETURN_GENERATED_KEYS);
                 ps.setString(1, tagName);
@@ -285,12 +349,18 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
             if (keys != null) {
                 Long id = ((Number) keys.get(TAG_TABLE_ID.getColumn())).longValue();
                 return new Tag(id, tagName);
-            }
+            } else return null;
         }
-
-        return null;
+        else return null;
     }
 
+    /**
+     *
+     * @param tagId unique id associated to tag
+     * @return
+     * true if tag is deleted
+     * false if not
+     */
     @Override
     public boolean deleteTag(long tagId) {
         log.info(DELETING_TAG_BY_ID, tagId);
@@ -298,11 +368,15 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         return jdbcTemplate.update(DELETE_TAG_BY_ID, tagId) > 0;
     }
 
+    /**
+     *
+     * @param giftCertificateId
+     * cannot be null
+     * @param tagIds list of unique ids associated to tag
+     * @throws RuntimeException if any tag does not exist
+     */
     @Override
-    public void joinTags(Long giftCertificateId, List<Long> tagIds) throws RuntimeException {
-
-        if (giftCertificateId == null)
-            throw new RuntimeException("Certificate is null");
+    public void joinTags(@NonNull Long giftCertificateId, List<Long> tagIds) throws RuntimeException {
 
         log.info("Joining tags to gift certificate with id {}", giftCertificateId);
 
@@ -312,13 +386,11 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
             if (tag == null) {
                 throw new RuntimeException("Tag with id " + tagId + " not found");
             }
-            //TODO create method for this
             jdbcTemplate.update(SAVE_TAGS_TO_GIFT_CERTIFICATES, giftCertificateId, tagId);
         });
     }
 
-    @Override
-    public boolean filterValidTags(List<Long> tagIds) {
+    private boolean filterValidTags(List<Long> tagIds) {
         log.info("Validating tags");
 
         return tagIds.stream().allMatch(tagId -> getTagById(tagId) != null);

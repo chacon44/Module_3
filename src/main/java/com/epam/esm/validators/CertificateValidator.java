@@ -9,6 +9,12 @@ import java.util.Optional;
 
 @Slf4j
 public class CertificateValidator {
+    /**
+     *
+     * @param giftCertificate cannot be empty or null
+     *                        can contain empty or null values
+     * @return
+     */
     public static Optional<String> validateRequest(GiftCertificate giftCertificate) {
 
         List<String> errors = new ArrayList<>();

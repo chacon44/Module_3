@@ -6,7 +6,6 @@ import java.util.List;
 
 @Data
 @Setter
-@Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

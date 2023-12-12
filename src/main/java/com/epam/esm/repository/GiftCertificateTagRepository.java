@@ -15,7 +15,7 @@ public interface GiftCertificateTagRepository {
     GiftCertificate saveGiftCertificate(GiftCertificate giftCertificate, List<Long> tagList);
 
     //GET
-    GiftCertificate getGiftCertificateById(long certificate_id);
+    GiftCertificate getGiftCertificateById(Long certificate_id);
     GiftCertificate getGiftCertificateByName(String giftCertificateName);
     List<GiftCertificate> getCertificatesByTagName(String tagName);
     List<GiftCertificate> searchCertificatesByKeyword(String keyWord);
@@ -42,7 +42,6 @@ public interface GiftCertificateTagRepository {
 
     //DELETE
     boolean deleteTag(long tag_id);
-    boolean filterValidTags(List<Long> tagIds);
 
     void joinTags(Long giftCertificateId, List<Long> tagIds);
 }

@@ -22,6 +22,3 @@ CREATE TABLE IF NOT EXISTS gift_certificate_tag (
     FOREIGN KEY (certificate_id) REFERENCES certificates(certificate_id) ON UPDATE CASCADE ON DELETE CASCADE,
     FOREIGN KEY (tag_id) REFERENCES tag(tag_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
-
-
-
