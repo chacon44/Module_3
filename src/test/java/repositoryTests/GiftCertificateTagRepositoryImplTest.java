@@ -92,7 +92,6 @@ class GiftCertificateTagRepositoryImplTest {
 
         GiftCertificate savedGiftCertificate = giftCertificateTagRepository.saveGiftCertificate(giftCertificate, tagIdsList);
         assertNotNull(savedGiftCertificate);
-        //assertNotNull(savedGiftCertificate.getTags());
         Long expectedIdSaved = giftCertificateList.size() + 1L;
         assertEquals(expectedIdSaved, savedGiftCertificate.getId());
 

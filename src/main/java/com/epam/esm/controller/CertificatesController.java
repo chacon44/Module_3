@@ -128,14 +128,19 @@ public class CertificatesController {
      */
     @PutMapping(value = "/certificate/{id}", consumes = {"application/json"}, produces = {"application/json"})
     ResponseEntity<?> updateCertificate(@PathVariable long id, @RequestBody GiftCertificateRequestDTO requestDTO) {
-        GiftCertificate giftCertificate = new GiftCertificate(
+//        GiftCertificate giftCertificate = new GiftCertificate(
+//                requestDTO.name(),
+//                requestDTO.description(),
+//                requestDTO.price(),
+//                requestDTO.duration()
+//        );
+
+        return giftCertificateService.updateGiftCertificate(id, new GiftCertificate(
                 requestDTO.name(),
                 requestDTO.description(),
                 requestDTO.price(),
                 requestDTO.duration()
-        );
-
-        return giftCertificateService.updateGiftCertificate(id, giftCertificate, requestDTO.tagIds());
+        ), requestDTO.tagIds());
     }
 
     /* Format of POST
