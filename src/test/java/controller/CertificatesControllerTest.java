@@ -18,65 +18,30 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Arrays.asList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.doReturn;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CertificatesControllerTest {
 
-    @Mock
-    private GiftCertificateService giftCertificateService;
-
     @InjectMocks
     private CertificatesController certificatesController;
 
+    @Mock
+    private GiftCertificateService giftCertificateService;
+
+    @Mock
+    GiftCertificate giftCertificate;
+
+    @Mock
+    GiftCertificateRequestDTO giftCertificateRequestDTO;
+
     private MockMvc mockMvc;
 
-    private List<Long> tagIdsList = new ArrayList<>();
-
-    private Tag
-            tag1 = new Tag(),
-            tag2 = new Tag(),
-            tag3 = new Tag(),
-            tag4 = new Tag(),
-            tag5 = new Tag(),
-            tag6 = new Tag();
-    private GiftCertificate giftCertificateResponse1 = new GiftCertificate(
-"certificate for test", "description for test", 10.50, 10L);
-
-    GiftCertificateRequestDTO giftCertificate = null;
-    List<Tag> tagList = asList(tag1,tag2,tag3,tag4,tag5,tag6);
-
-    public void createData(){
-
-        tag1 = new Tag(1L, "tag 3");
-        tag2 = new Tag(2L, "tag 1");
-        tag3 = new Tag(3L, "tag 2");
-        tag4 = new Tag(4L, "blue");
-        tag5 = new Tag(5L, "colour");
-        tag6 = new Tag(6L, "animal 1");
-
-        tagIdsList = new ArrayList<>(asList(1L, 3L, 4L, 5L));
-        tagList = asList(tag1, tag3, tag4, tag5);
-        giftCertificate = new GiftCertificateRequestDTO(
-                "certificate for test", "description for test", 10.50, 10L, tagIdsList);
-
-        giftCertificateResponse1 = new GiftCertificate(
-                "certificate for test", "description for test", 10.50, 10L);
-
-        giftCertificateResponse1.setId(1L);
-        giftCertificateResponse1.setCreateDate("2023-11-21T16:48:04:309Z");
-        giftCertificateResponse1.setLastUpdateDate("2023-12-25T16:48:04:309Z");
-        giftCertificateResponse1.setTags(tagList);
-    }
     public static String asJsonString(final Object obj) {
         try {
             return new ObjectMapper().writeValueAsString(obj);
@@ -88,26 +53,160 @@ public class CertificatesControllerTest {
     @BeforeEach
     public void setup() {
         this.mockMvc = MockMvcBuilders.standaloneSetup(this.certificatesController).build();
-        createData();
     }
 
     @Test
-    public void testPostGiftCertificate_giftCertificateNotFound_CreatedReturned()  throws Exception {
+    public void postCertificate() throws Exception {
 
-        when(giftCertificateService.saveGiftCertificate(eq(giftCertificateResponse1), eq(tagIdsList))).thenReturn(new ResponseEntity(giftCertificateResponse1, HttpStatus.CREATED));
+        GiftCertificate giftCertificateToSave = new GiftCertificate(
+                giftCertificateRequestDTO.name(),
+                giftCertificateRequestDTO.description(),
+                giftCertificateRequestDTO.price(),
+                giftCertificateRequestDTO.duration()
+        );
 
-        String responseString = mockMvc.perform(post("/certificate").accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(giftCertificate)))
-        //Assert
-                .andExpect(status().isOk())
+        List<Long> tagIds = giftCertificateRequestDTO.tagIds();
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(giftCertificate);
+        doReturn(responseEntity).when(giftCertificateService).saveGiftCertificate(giftCertificateToSave, tagIds);
+
+        // Act
+        mockMvc.perform(post("/certificate")
+                        .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(giftCertificateRequestDTO)))
+                //Assert
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andReturn().getResponse().getContentAsString();
-
-        GiftCertificate responseObject = new ObjectMapper().readValue(responseString, GiftCertificate.class);
-
-        // Perform assertions on responseObject
-        assertEquals(1L, responseObject.getId());
-
+                .andExpect(jsonPath("$.id", is(giftCertificate.getId()), Long.class))
+                .andExpect(jsonPath("$.name", is(giftCertificate.getName())))
+                .andExpect(jsonPath("$.description", is(giftCertificate.getDescription())))
+                .andExpect(jsonPath("$.price", is(giftCertificate.getPrice())))
+                .andExpect(jsonPath("$.duration", is(giftCertificate.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificate.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificate.getLastUpdateDate())))
+                .andExpect(jsonPath("$.tags", is(giftCertificate.getTags())))
+                .andExpect(status().isCreated());
     }
 
+    @Test
+    public void getCertificate() throws Exception {
+        // Arrange
+
+        Long id = giftCertificate.getId();
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.CREATED).body(giftCertificate);
+        doReturn(responseEntity).when(giftCertificateService).getGiftCertificateById(id);
+
+        // Act
+        mockMvc.perform(get("/certificate/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(id)))
+                //Assert
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(id), Long.class))
+                .andExpect(jsonPath("$.name", is(giftCertificate.getName())))
+                .andExpect(jsonPath("$.description", is(giftCertificate.getDescription())))
+                .andExpect(jsonPath("$.price", is(giftCertificate.getPrice())))
+                .andExpect(jsonPath("$.duration", is(giftCertificate.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificate.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificate.getLastUpdateDate())))
+                .andExpect(jsonPath("$.tags", is(giftCertificate.getTags())))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    public void getCertificate_filter() throws Exception {
+        // Arrange
+        List<Long> tagIds = List.of(1L, 2L);
+        Long id = 1L;
+        Tag tag1 = new Tag(1L, "tag1");
+        Tag tag2 = new Tag(2L, "tag2");
+
+        String tagName = "tag1";
+        String searchWord = "name";
+        String nameOrder = "ASC";
+        String createDateOrder = "ASC";
+
+        List<Tag> tags = List.of(tag1, tag2);
+        GiftCertificateRequestDTO giftCertificateRequestDTO = new GiftCertificateRequestDTO(
+                "name", "description", 10.50, 20L, tagIds);
+
+        GiftCertificate giftCertificateToGet = new GiftCertificate(
+                1L,
+                giftCertificateRequestDTO.name(),
+                giftCertificateRequestDTO.description(),
+                giftCertificateRequestDTO.price(),
+                giftCertificateRequestDTO.duration(),
+                "createDate",
+                "last update date",
+                tags);
+
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificateToGet);
+        doReturn(responseEntity).when(giftCertificateService).getFilteredCertificates(tagName,searchWord,nameOrder,createDateOrder);
+
+        // Act
+        mockMvc.perform(get("/certificate/")
+                        .accept(MediaType.APPLICATION_JSON).contentType(MediaType.APPLICATION_JSON)
+
+                .param("tagName", tagName)
+                .param("searchWord", searchWord)
+                .param("nameOrder", nameOrder)
+                .param("createDateOrder", createDateOrder))
+                //Assert
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(id), Long.class))
+                .andExpect(jsonPath("$.name", is(giftCertificateToGet.getName())))
+                .andExpect(jsonPath("$.description", is(giftCertificateToGet.getDescription())))
+                .andExpect(jsonPath("$.price", is(giftCertificateToGet.getPrice())))
+                .andExpect(jsonPath("$.duration", is(giftCertificateToGet.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificateToGet.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificateToGet.getLastUpdateDate())))
+                //.andExpect(jsonPath("$.tags", is(giftCertificateToGet.getTags())))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void deleteCertificate() throws Exception {
+        // Arrange
+        Long id = 1L;
+
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.FOUND).body(null);
+        doReturn(responseEntity).when(giftCertificateService).deleteGiftCertificate(id);
+
+        // Act
+        mockMvc.perform(delete("/certificate/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(id)))
+                //Assert
+                .andExpect(status().isFound());
+    }
+
+    @Test
+    public void putCertificate() throws Exception {
+        // Arrange
+        Long id = 1L;
+        List<Long> tagIds = giftCertificateRequestDTO.tagIds();
+        GiftCertificate giftCertificateToUpdate = new GiftCertificate(
+                giftCertificateRequestDTO.name(),
+                giftCertificateRequestDTO.description(),
+                giftCertificateRequestDTO.price(),
+                giftCertificateRequestDTO.duration()
+        );
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
+        doReturn(responseEntity).when(giftCertificateService).updateGiftCertificate(id, giftCertificateToUpdate, tagIds);
+
+        /* Act */
+        mockMvc.perform(put("/certificate/{id}", id)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(id)))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id", is(id), Long.class))
+                .andExpect(jsonPath("$.name", is(giftCertificate.getName())))
+                .andExpect(jsonPath("$.description", is(giftCertificate.getDescription())))
+                .andExpect(jsonPath("$.price", is(giftCertificate.getPrice())))
+                .andExpect(jsonPath("$.duration", is(giftCertificate.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificate.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificate.getLastUpdateDate())))
+                .andExpect(jsonPath("$.tags", is(asJsonString(giftCertificate.getTags()))))
+                .andExpect(status().isOk());
+    }
 }

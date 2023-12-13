@@ -80,7 +80,7 @@ public class GiftCertificateService {
      *
      * @param giftCertificateId id of the certificate
      * @return
-     * if certificate exists, returns Response Entity with giftcertificate
+     * if certificate exists, returns found with giftcertificate
      * if not, returns not found and error
      */
     public ResponseEntity getGiftCertificateById(@NonNull Long giftCertificateId) {
@@ -88,7 +88,7 @@ public class GiftCertificateService {
         GiftCertificate giftCertificate = giftCertificateTagRepository.getGiftCertificateById(giftCertificateId);
 
         if (giftCertificate != null) {
-            return ResponseEntity.ok(giftCertificate);
+            return ResponseEntity.status(HttpStatus.FOUND).body(giftCertificate);
         } else {
             String message = CERTIFICATE_WITH_ID_NOT_FOUND.formatted(giftCertificateId);
 
@@ -158,7 +158,8 @@ public class GiftCertificateService {
     public ResponseEntity<?> updateGiftCertificate(@NonNull Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
 
         Optional< ResponseEntity<ErrorDTO> > requestValidationMessage = validateCertificateRequest(giftCertificate);
-        if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
+        if (requestValidationMessage.isPresent())
+            return requestValidationMessage.get();
 
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
 

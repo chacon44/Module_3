@@ -66,7 +66,7 @@ public class TagService {
         Tag tag = giftCertificateTagRepository.getTagById(tagId);
 
         if (tag != null) {
-            return ResponseEntity.ok(tag);
+            return ResponseEntity.status(FOUND).body(tag);
         } else {
             String message = TAG_ID_NOT_FOUND.formatted(tagId);
 

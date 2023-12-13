@@ -77,7 +77,7 @@ public class CertificatesController {
      * @value "/certificate/" The path where this method is mapped.
      * @produces {"application/json"} Specifies that this method returns data in application/json format.
      */
-    @GetMapping(value = "/certificate/", produces = {"application/json"})
+    @GetMapping(value = "/certificate/", consumes = {"application/json"}, produces = {"application/json"})
     public ResponseEntity<?> getFilteredCertificates(
             @RequestParam(required = false) String tagName,
             @RequestParam(required = false) String searchWord,

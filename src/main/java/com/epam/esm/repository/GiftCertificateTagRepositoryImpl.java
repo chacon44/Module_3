@@ -274,7 +274,8 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     public Tag getTagById(long tagId) {
         log.info(GETTING_TAG_BY_ID, tagId);
         try {
-            return jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
+            Tag tag = jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
+            return tag;
         } catch (EmptyResultDataAccessException e) {
             log.warn(TAG_ID_NOT_FOUND.formatted(tagId));
             return null;
