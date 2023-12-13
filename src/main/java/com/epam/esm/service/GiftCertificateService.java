@@ -198,7 +198,6 @@ public class GiftCertificateService {
         boolean tagsExist = tagIdList.equals(tagIdsList);
 
         return !nameExist || !descriptionExist || !priceExist || !durationExist || !tagsExist;
-
     }
 }
 

@@ -128,17 +128,17 @@ public class CertificatesControllerTest {
         GiftCertificateRequestDTO giftCertificateRequestDTO = new GiftCertificateRequestDTO(
                 "name", "description", 10.50, 20L, tagIds);
 
-        GiftCertificate giftCertificateToGet = new GiftCertificate(
-                1L,
-                giftCertificateRequestDTO.name(),
-                giftCertificateRequestDTO.description(),
-                giftCertificateRequestDTO.price(),
-                giftCertificateRequestDTO.duration(),
-                "createDate",
-                "last update date",
-                tags);
+//        GiftCertificate giftCertificateToGet = new GiftCertificate(
+//                1L,
+//                giftCertificateRequestDTO.name(),
+//                giftCertificateRequestDTO.description(),
+//                giftCertificateRequestDTO.price(),
+//                giftCertificateRequestDTO.duration(),
+//                "createDate",
+//                "last update date",
+//                tags);
 
-        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificateToGet);
+        ResponseEntity<?> responseEntity = ResponseEntity.status(HttpStatus.OK).body(giftCertificate);
         doReturn(responseEntity).when(giftCertificateService).getFilteredCertificates(tagName,searchWord,nameOrder,createDateOrder);
 
         // Act
@@ -151,14 +151,14 @@ public class CertificatesControllerTest {
                 .param("createDateOrder", createDateOrder))
                 //Assert
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id", is(id), Long.class))
-                .andExpect(jsonPath("$.name", is(giftCertificateToGet.getName())))
-                .andExpect(jsonPath("$.description", is(giftCertificateToGet.getDescription())))
-                .andExpect(jsonPath("$.price", is(giftCertificateToGet.getPrice())))
-                .andExpect(jsonPath("$.duration", is(giftCertificateToGet.getDuration().intValue())))
-                .andExpect(jsonPath("$.createDate", is(giftCertificateToGet.getCreateDate())))
-                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificateToGet.getLastUpdateDate())))
-                //.andExpect(jsonPath("$.tags", is(giftCertificateToGet.getTags())))
+                .andExpect(jsonPath("$.id", is(giftCertificate.getId()), Long.class))
+                .andExpect(jsonPath("$.name", is(giftCertificate.getName())))
+                .andExpect(jsonPath("$.description", is(giftCertificate.getDescription())))
+                .andExpect(jsonPath("$.price", is(giftCertificate.getPrice())))
+                .andExpect(jsonPath("$.duration", is(giftCertificate.getDuration().intValue())))
+                .andExpect(jsonPath("$.createDate", is(giftCertificate.getCreateDate())))
+                .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificate.getLastUpdateDate())))
+                .andExpect(jsonPath("$.tags", is(giftCertificate.getTags())))
                 .andExpect(status().isOk());
     }
 
@@ -203,7 +203,7 @@ public class CertificatesControllerTest {
                 .andExpect(jsonPath("$.duration", is(giftCertificate.getDuration().intValue())))
                 .andExpect(jsonPath("$.createDate", is(giftCertificate.getCreateDate())))
                 .andExpect(jsonPath("$.lastUpdateDate", is(giftCertificate.getLastUpdateDate())))
-                //.andExpect(jsonPath("$.tags", is(asJsonString(giftCertificate.getTags()))))
+                .andExpect(jsonPath("$.tags", is(giftCertificate.getTags())))
                 .andExpect(status().isOk());
     }
 }

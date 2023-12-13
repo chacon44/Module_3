@@ -5,6 +5,7 @@ import com.epam.esm.mapper.GiftCertificateRowMapper;
 import com.epam.esm.mapper.TagRowMapper;
 import com.epam.esm.model.GiftCertificate;
 import com.epam.esm.model.Tag;
+import com.epam.esm.queries.PostgreSqlQueries;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -16,13 +17,14 @@ import org.springframework.stereotype.Repository;
 import java.sql.PreparedStatement;
 import java.util.*;
 
-import static com.epam.esm.enums.Columns.*;
+import static com.epam.esm.enums.Columns.GIFT_CERTIFICATE_ID;
+import static com.epam.esm.enums.Columns.TAG_TABLE_ID;
 import static com.epam.esm.exceptions.Messages.*;
 import static com.epam.esm.logs.LogMessages.*;
 import static com.epam.esm.queries.PostgreSqlQueries.*;
-import static java.sql.Statement.*;
+import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.toList;
 
 @Repository
 @Slf4j
@@ -32,16 +34,19 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     private final TagRowMapper tagRowMapper;
     private final GiftCertificateRowMapper certificateRowMapper;
 
-    public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper) {
+    private final PostgreSqlQueries queries;
+
+    public GiftCertificateTagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper, GiftCertificateRowMapper certificateRowMapper, PostgreSqlQueries queries) {
         this.jdbcTemplate = jdbcTemplate;
         this.tagRowMapper = tagRowMapper;
         this.certificateRowMapper = certificateRowMapper;
+        this.queries = queries;
     }
 
     /**
      * @param giftCertificate cannot be null or empty
      * @param tagList         can be empty
-     * @return null if certificate name already exist
+     * @return null if certificate name already exists
      * certificate if it does not exist
      */
     @Override
@@ -55,7 +60,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(
                 connection -> {
-                    PreparedStatement ps = connection.prepareStatement(SAVE_GIFT_CERTIFICATE, RETURN_GENERATED_KEYS);
+                    PreparedStatement ps = connection.prepareStatement(queries.getSaveGiftCertificate(), RETURN_GENERATED_KEYS);
 
                     ps.setString(1, giftCertificate.getName());
                     ps.setString(2, giftCertificate.getDescription());
@@ -118,7 +123,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     /**
      * @param tagName unique name associated to tag
      * @return tag if name exists
-     * empty list if not
+     * an empty list if not
      */
     @Override
     public List<GiftCertificate> getCertificatesByTagName(String tagName) {
@@ -141,7 +146,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
      *
      * @param keyword word to search in name or description
      * @return
-     * list of certificates, can be empty
+     * the list of certificates can be empty
      */
     @Override
     public List<GiftCertificate> searchCertificatesByKeyword(String keyword) {
@@ -224,7 +229,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
      *
      * @param giftCertificateId unique id associated to certificate
      * @return
-     * true if certificate was deleted, false if not
+     * true if the certificate was deleted, false if not
      */
     @Override
     public boolean deleteGiftCertificate(long giftCertificateId) {
@@ -239,7 +244,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
      * @param giftCertificate certificate containing new data to be updated
      * @param tagIds list of unique ids associated to tags
      * @return
-     * null if some of the tags does not exist, or certificate does not exist
+     * null if some tags do not exist, or certificate does not exist
      * updated certificate if it is updated
      */
     @Override
@@ -253,7 +258,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
         }
 
         joinTags(certificate_id, tagIds);
-        jdbcTemplate.update(UPDATE_GIFT_CERTIFICATE,
+        jdbcTemplate.update(queries.getUpdateGiftCertificate(),
                 giftCertificate.getName(),
                 giftCertificate.getDescription(),
                 giftCertificate.getPrice(),
@@ -274,8 +279,7 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
     public Tag getTagById(long tagId) {
         log.info(GETTING_TAG_BY_ID, tagId);
         try {
-            Tag tag = jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
-            return tag;
+            return jdbcTemplate.queryForObject(GET_TAG_BY_ID, tagRowMapper, tagId);
         } catch (EmptyResultDataAccessException e) {
             log.warn(TAG_ID_NOT_FOUND.formatted(tagId));
             return null;
@@ -332,8 +336,8 @@ public class GiftCertificateTagRepositoryImpl implements GiftCertificateTagRepos
      *
      * @param tagName unique name associated to tag
      * @return
-     * tag if name does not exists
-     * null if it already exist
+     * tag if name does not exist
+     * null if it already exists
      */
     @Override
     public Tag saveTag(@NonNull String tagName) {
