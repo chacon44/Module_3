@@ -47,7 +47,7 @@ public class GiftCertificateService {
      */
     public ResponseEntity<?> saveGiftCertificate(@NonNull GiftCertificate giftCertificate, List<Long> tagIdsList) {
 
-        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate);
+        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
         if (requestValidationMessage.isPresent()) return requestValidationMessage.get();
 
         tagIdsList = tagIdsList.stream().distinct().collect(Collectors.toList());
@@ -145,7 +145,7 @@ public class GiftCertificateService {
      */
     public ResponseEntity<?> updateGiftCertificate(@NonNull Long id, GiftCertificate giftCertificate, List<Long> tagIdsList) {
 
-        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate);
+        Optional<ResponseEntity<ErrorDTO>> requestValidationMessage = validateCertificateRequest(giftCertificate, tagIdsList);
         if (requestValidationMessage.isPresent())
             return requestValidationMessage.get();
 
@@ -176,8 +176,13 @@ public class GiftCertificateService {
         return ResponseEntity.status(HttpStatus.OK).body(responseDTO);
     }
 
-    private Optional<ResponseEntity<ErrorDTO>> validateCertificateRequest(GiftCertificate giftCertificate) {
+    private Optional<ResponseEntity<ErrorDTO>> validateCertificateRequest(GiftCertificate giftCertificate, List<Long> tagIds) {
         Optional<String> validationMessage = CertificateValidator.validateRequest(giftCertificate);
+        for (Long tagId : tagIds)
+            if (giftCertificateTagRepository.getTagById(tagId) == null) {
+                ErrorDTO errorResponse = new ErrorDTO("non existing tags", CERTIFICATE_BAD_REQUEST);
+                return Optional.of(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
+            }
 
         if (validationMessage.isPresent()) {
             ErrorDTO errorResponse = new ErrorDTO(validationMessage.get(), CERTIFICATE_BAD_REQUEST);
